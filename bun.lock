@@ -9,6 +9,7 @@
         "react-dom": "^19.1.0",
       },
       "devDependencies": {
+        "@artemiy/oxfmt-allman": "0.62.0",
         "@types/bun": "latest",
         "@types/react": "^19.1.0",
         "@types/react-dom": "^19.1.0",
@@ -17,6 +18,8 @@
     },
   },
   "packages": {
+    "@artemiy/oxfmt-allman": ["@artemiy/oxfmt-allman@0.62.0", "https://git.z3r.io/api/packages/Aver/npm/%40artemiy%2Foxfmt-allman/-/0.62.0/oxfmt-allman-0.62.0.tgz", { "bin": { "oxfmt": "bin/oxfmt.js" } }, "sha512-KB0H1O3g7imDJI+wLRJqWJM61BYr+tE1ufBKxbLioFPDNPUeD47ox5gW6erK7RQfscfh7bYRFSdBzxgK+R7wtA=="],
+
     "@types/bun": ["@types/bun@1.4.1", "", { "dependencies": { "bun-types": "1.4.1" } }, "sha512-0AVGiTXGajf1rgKom3N+c5L7CBxuoyyv1i44M0nX4UDK0G/fnRAMiri93nHuVPIb429KKtAgj7HatVmmOjeQLA=="],
 
     "@types/node": ["@types/node@26.4.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-k97ENvZWtvA6yqz5/FS6a7duDgOPEeOQOc2iKS/nY6mX6qJUKtLnWzQS+Xj6tXweyj6ZcTAK2Qecetnvi9nCLA=="],

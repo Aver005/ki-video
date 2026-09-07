@@ -6,3 +6,4 @@ ki.config.json
 .DS_Store
 Thumbs.db
 .playwright-mcp/
+.npmrc

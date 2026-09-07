@@ -1,0 +1,21 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["typescript", "unicorn", "oxc", "react", "import"],
+    "categories": {
+        "correctness": "error"
+    },
+    "ignorePatterns": [
+        "src/routeTree.gen.ts",
+        "public/**",
+        "output/**",
+        ".output/**",
+        ".tanstack/**",
+        ".nitro/**",
+        ".vinxi/**",
+        ".wrangler/**",
+        "project.inlang/**"
+    ],
+    "rules": {
+        "react-hooks/exhaustive-deps": "off"
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "$schema": "./node_modules/@artemiy/oxfmt-allman/configuration_schema.json",
+    "braceStyle": "allman",
+    "printWidth": 80,
+    "tabWidth": 4,
+    "useTabs": false,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "endOfLine": "lf",
+    "ignorePatterns": [
+        "src/routeTree.gen.ts",
+        "dist/**",
+        "build/**",
+        "output/**",
+        ".output/**",
+        ".tanstack/**",
+        ".nitro/**",
+        ".vite/**",
+        ".vinxi/**",
+        ".wrangler/**",
+        "project.inlang/**"
+    ]
+}

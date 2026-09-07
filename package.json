@@ -8,6 +8,8 @@
     "dev": "bun run --hot src/server/main.ts",
     "start": "bun run src/server/main.ts",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.app.json",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "test": "bun test",
     "check": "bun run typecheck && bun test",
     "build": "bun run scripts/build.ts",
@@ -18,6 +20,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@artemiy/oxfmt-allman": "0.62.0",
     "@types/bun": "latest",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
