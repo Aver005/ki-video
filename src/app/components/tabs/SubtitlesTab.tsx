@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check, Plus, Trash } from 'lucide-react'
 import { getState, useStore } from '@app/store/store'
 import { removeCue, setCues, update, updateCue } from '@app/store/actions'
 import { Slider } from '@app/components/Slider'
@@ -46,6 +47,7 @@ function CueEditor({ cue }: { cue: SubtitleCue })
                 className="btn btn--danger"
                 onClick={() => removeCue(cue.id)}
             >
+                <Trash />
                 Удалить реплику
             </button>
         </div>
@@ -120,7 +122,8 @@ export function SubtitlesTab()
             />
             <div className="row-actions">
                 <button className="btn" onClick={addAtPlayhead}>
-                    + Реплика под курсором
+                    <Plus />
+                    Реплика под курсором
                 </button>
             </div>
             <textarea
@@ -139,6 +142,7 @@ export function SubtitlesTab()
                     onClick={() => setCues(parseCues(draft))}
                     disabled={draft === cuesKey}
                 >
+                    <Check />
                     Применить
                 </button>
                 <span className="muted">{subtitles.cues.length} реплик</span>

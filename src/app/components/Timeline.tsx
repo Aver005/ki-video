@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useStore } from '@app/store/store'
 import { addTrack, seek } from '@app/store/actions'
 import { TrackLane } from '@app/components/TrackLane'
@@ -76,14 +77,16 @@ export function Timeline()
                             onClick={() => addTrack('overlay')}
                             title="Добавить дорожку наложений"
                         >
-                            + слой
+                            <Plus />
+                            слой
                         </button>
                         <button
                             className="btn btn--small"
                             onClick={() => addTrack('audio')}
                             title="Добавить звуковую дорожку"
                         >
-                            + звук
+                            <Plus />
+                            звук
                         </button>
                     </div>
                     <div

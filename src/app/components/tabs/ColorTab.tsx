@@ -1,3 +1,4 @@
+import { Diamond, RotateCcw } from 'lucide-react'
 import { useStore } from '@app/store/store'
 import {
     addColorKey,
@@ -69,13 +70,15 @@ export function ColorTab()
                     }
                     title="Ключ цвета на шкале проекта"
                 >
-                    ◆ {keyframe ? 'Убрать ключ' : `Ключ на ${time.toFixed(2)}s`}
+                    <Diamond />
+                    {keyframe ? 'Убрать ключ' : `Ключ на ${time.toFixed(2)}s`}
                 </button>
                 <button
                     className="btn btn--ghost"
                     onClick={clearColorKeys}
                     disabled={keys.length === 0}
                 >
+                    <RotateCcw />
                     Сбросить ключи
                 </button>
             </div>

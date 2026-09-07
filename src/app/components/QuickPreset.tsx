@@ -1,3 +1,4 @@
+import { Sparkles } from 'lucide-react'
 import { setColor, update } from '@app/store/actions'
 import { AUDIO_PRESETS, COLOR_PRESETS } from '@shared/presets'
 
@@ -20,6 +21,7 @@ export function QuickPreset()
         <>
             <div className="section-title">Всё сразу</div>
             <button className="btn" onClick={applyQuickPreset}>
+                <Sparkles />
                 Быстрый ТикТок-пресет
             </button>
         </>

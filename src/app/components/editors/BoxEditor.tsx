@@ -1,3 +1,4 @@
+import { Diamond, RotateCcw } from 'lucide-react'
 import {
     addBoxKey,
     boxAt,
@@ -75,7 +76,7 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
                             }
                             title="Ключ движения наложения"
                         >
-                            ◆{' '}
+                            <Diamond />
                             {at.keyframe
                                 ? 'Убрать ключ'
                                 : `Ключ на ${at.localT.toFixed(2)}s`}
@@ -85,6 +86,7 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
                             onClick={() => clearBoxKeys(item.id)}
                             disabled={item.boxKeys.length === 0}
                         >
+                            <RotateCcw />
                             Сбросить
                         </button>
                     </div>

@@ -17,6 +17,7 @@
         "hooks": "git config core.hooksPath .githooks"
     },
     "dependencies": {
+        "lucide-react": "^1.42.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0"
     },

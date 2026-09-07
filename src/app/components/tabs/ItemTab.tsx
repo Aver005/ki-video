@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react'
 import { useStore } from '@app/store/store'
 import {
     addText,
@@ -52,6 +53,7 @@ export function ItemTab()
                         setTab('item')
                     }}
                 >
+                    <Pencil />
                     Править кадр: {current.asset.name}
                 </button>
             ) : (

@@ -1,3 +1,4 @@
+import { Eye, EyeOff, Volume2, VolumeX, X } from 'lucide-react'
 import { getState, useStore } from '@app/store/store'
 import {
     addAssetToTimeline,
@@ -58,7 +59,7 @@ export function TrackLane({
                             }
                             title={track.hidden ? 'Показать' : 'Скрыть'}
                         >
-                            {track.hidden ? '🚫' : '👁'}
+                            {track.hidden ? <EyeOff /> : <Eye />}
                         </button>
                     )}
                     <button
@@ -68,15 +69,16 @@ export function TrackLane({
                         }
                         title={track.muted ? 'Включить звук' : 'Заглушить'}
                     >
-                        {track.muted ? '🔇' : '🔊'}
+                        {track.muted ? <VolumeX /> : <Volume2 />}
                     </button>
                     {track.kind !== 'content' && (
                         <button
                             className="btn btn--small btn--ghost btn--danger"
                             onClick={() => removeTrack(track.id)}
                             title="Убрать дорожку"
+                            aria-label="Убрать дорожку"
                         >
-                            ×
+                            <X />
                         </button>
                     )}
                 </div>

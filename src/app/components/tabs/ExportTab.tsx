@@ -1,3 +1,4 @@
+import { Download, FolderOpen, X } from 'lucide-react'
 import { api } from '@app/api'
 import { getState, useStore } from '@app/store/store'
 import { notify, update } from '@app/store/actions'
@@ -129,6 +130,7 @@ export function ExportTab()
                     disabled={running || duration === 0 || !status?.ok}
                     onClick={() => void startExport()}
                 >
+                    <Download />
                     {running ? 'Идёт экспорт…' : 'Экспортировать'}
                 </button>
                 {running && job && (
@@ -136,6 +138,7 @@ export function ExportTab()
                         className="btn btn--ghost"
                         onClick={() => void api.cancelExport(job.id)}
                     >
+                        <X />
                         Отменить
                     </button>
                 )}
@@ -167,6 +170,7 @@ export function ExportTab()
                             onClick={() => void api.reveal(job.outFile)}
                             title={job.outFile}
                         >
+                            <FolderOpen />
                             Показать файл
                         </button>
                     )}

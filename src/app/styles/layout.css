@@ -97,6 +97,10 @@
 
 /* Кнопки */
 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background: var(--bg-3);
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -140,11 +144,29 @@
 .btn--icon {
     width: 32px;
     padding: 5px 0;
-    text-align: center;
 }
 .btn--active {
     border-color: var(--key);
     color: var(--key);
+}
+
+/* Иконки Lucide: размер задаём стилем, чтобы не повторять его в разметке. */
+.lucide {
+    width: 15px;
+    height: 15px;
+    flex: none;
+}
+.btn--small .lucide {
+    width: 14px;
+    height: 14px;
+}
+.btn--icon .lucide {
+    width: 18px;
+    height: 18px;
+}
+.asset__kind .lucide {
+    width: 22px;
+    height: 22px;
 }
 
 .chip {

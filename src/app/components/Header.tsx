@@ -1,3 +1,4 @@
+import { Download } from 'lucide-react'
 import { useStore } from '@app/store/store'
 import { update, setTab } from '@app/store/actions'
 import { projectDuration } from '@shared/timeline'
@@ -39,6 +40,7 @@ export function Header()
                 onClick={() => setTab('export')}
                 disabled={!project || duration === 0}
             >
+                <Download />
                 {running
                     ? `Экспорт ${Math.round((exportJob?.percent ?? 0) * 100)}%`
                     : 'Экспорт'}

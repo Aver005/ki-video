@@ -1,3 +1,4 @@
+import { Trash } from 'lucide-react'
 import { maxDuration, placeItem, removeItem } from '@app/store/actions'
 import { NumberField } from '@app/components/NumberField'
 import { MIN_ITEM_SECONDS, isMediaItem } from '@shared/model'
@@ -41,6 +42,7 @@ export function TimingRow({ item, asset }: TimingRowProps)
                 className="btn btn--danger"
                 onClick={() => removeItem(item.id)}
             >
+                <Trash />
                 Удалить элемент
             </button>
         </>

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useStore } from '@app/store/store'
 import { notify } from '@app/store/actions'
 
@@ -9,6 +10,7 @@ export function Notice()
         <div className="notice" role="status">
             <span>{notice}</span>
             <button className="btn btn--ghost" onClick={() => notify(null)}>
+                <X />
                 Закрыть
             </button>
         </div>

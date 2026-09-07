@@ -1,3 +1,4 @@
+import { Diamond, Pause, Play, Scissors, SkipBack } from 'lucide-react'
 import { getPlayer } from '@app/hooks/usePlayer'
 import { useStore } from '@app/store/store'
 import {
@@ -29,7 +30,7 @@ export function Transport()
                 title="В начало (Home)"
                 aria-label="В начало"
             >
-                ⏮
+                <SkipBack />
             </button>
             <button
                 className="btn btn--icon btn--primary"
@@ -38,7 +39,7 @@ export function Transport()
                 aria-label={playing ? 'Пауза' : 'Играть'}
                 disabled={duration === 0}
             >
-                {playing ? '❚❚' : '▶'}
+                {playing ? <Pause /> : <Play />}
             </button>
             <span className="transport__time">
                 {formatTime(time)}{' '}
@@ -51,7 +52,8 @@ export function Transport()
                 onClick={() => (hasKey ? removeKeyframe() : addKeyframe())}
                 title="Ключевой кадр (K)"
             >
-                ◆ {hasKey ? 'Убрать ключ' : 'Ключ'}
+                <Diamond />
+                {hasKey ? 'Убрать ключ' : 'Ключ'}
             </button>
             <button
                 className="btn"
@@ -59,6 +61,7 @@ export function Transport()
                 onClick={splitAtPlayhead}
                 title="Разрезать (S)"
             >
+                <Scissors />
                 Разрезать
             </button>
             <input

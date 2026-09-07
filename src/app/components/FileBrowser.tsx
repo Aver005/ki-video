@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ArrowUp, Folder, Plus } from 'lucide-react'
 import { api } from '@app/api'
 import type { FsListing } from '@shared/api'
 
@@ -69,7 +70,7 @@ export function FileBrowser({ onPick, onClose }: FileBrowserProps)
                         onClick={() => open(listing?.parent ?? undefined)}
                         aria-label="Вверх"
                     >
-                        ↑
+                        <ArrowUp />
                     </button>
                     <input
                         className="modal__path"
@@ -94,7 +95,8 @@ export function FileBrowser({ onPick, onClose }: FileBrowserProps)
                                 className="row"
                                 onClick={() => open(entry.path)}
                             >
-                                📁 {entry.name}
+                                <Folder />
+                                {entry.name}
                             </button>
                         ) : (
                             <label
@@ -123,6 +125,7 @@ export function FileBrowser({ onPick, onClose }: FileBrowserProps)
                         disabled={chosen.size === 0}
                         onClick={() => onPick([...chosen])}
                     >
+                        <Plus />
                         Добавить {chosen.size > 0 ? chosen.size : ''}
                     </button>
                 </div>

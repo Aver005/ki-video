@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { LayoutGrid, List, Plus, Rows3, type LucideIcon } from 'lucide-react'
 import { api } from '@app/api'
 import { resizeLayout, useStore, type BinView } from '@app/store/store'
 import { notify } from '@app/store/actions'
@@ -20,10 +21,10 @@ async function importPaths(paths: string[]): Promise<boolean>
     }
 }
 
-const VIEWS: { id: BinView; icon: string; label: string }[] = [
-    { id: 'list', icon: '☰', label: 'Списком' },
-    { id: 'grid', icon: '▦', label: 'Плиткой' },
-    { id: 'compact', icon: '⋮', label: 'Одной строкой' },
+const VIEWS: { id: BinView; icon: LucideIcon; label: string }[] = [
+    { id: 'list', icon: List, label: 'Списком' },
+    { id: 'grid', icon: LayoutGrid, label: 'Плиткой' },
+    { id: 'compact', icon: Rows3, label: 'Одной строкой' },
 ]
 
 export function MediaBin()
@@ -60,6 +61,7 @@ export function MediaBin()
             <div className="bin__head">
                 <span className="section-title">Файлы</span>
                 <button className="btn" onClick={() => void pickFiles()}>
+                    <Plus />
                     Добавить
                 </button>
             </div>
@@ -73,7 +75,7 @@ export function MediaBin()
                         aria-label={v.label}
                         aria-pressed={v.id === view}
                     >
-                        {v.icon}
+                        <v.icon />
                     </button>
                 ))}
                 <span className="muted">{list.length}</span>

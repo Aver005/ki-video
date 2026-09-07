@@ -1,3 +1,4 @@
+import { Music, Plus, X } from 'lucide-react'
 import { thumbUrl } from '@app/api'
 import { addAssetToTimeline, removeAsset } from '@app/store/actions'
 import { ASSET_DRAG_TYPE } from '@app/components/TrackLane'
@@ -54,7 +55,9 @@ export function AssetCard({ asset, view, progress }: AssetCardProps)
                     <img src={thumbUrl(asset.id, 1)} alt="" />
                 )}
                 {asset.kind === 'audio' && (
-                    <span className="asset__kind">♪</span>
+                    <span className="asset__kind">
+                        <Music />
+                    </span>
                 )}
             </div>
             <div className="asset__body">
@@ -80,7 +83,7 @@ export function AssetCard({ asset, view, progress }: AssetCardProps)
                     title={`На таймлайн (${KIND_LABEL[asset.kind]}); можно и перетащить на дорожку`}
                     aria-label="Добавить на таймлайн"
                 >
-                    +
+                    <Plus />
                 </button>
                 <button
                     className="btn btn--small btn--ghost"
@@ -88,7 +91,7 @@ export function AssetCard({ asset, view, progress }: AssetCardProps)
                     title="Убрать"
                     aria-label="Убрать из списка"
                 >
-                    ×
+                    <X />
                 </button>
             </div>
         </div>

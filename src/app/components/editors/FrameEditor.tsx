@@ -1,3 +1,4 @@
+import { Crosshair, Diamond, RotateCcw, Scissors } from 'lucide-react'
 import {
     addKeyframe,
     clearKeyframes,
@@ -39,6 +40,7 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                     где его видно.
                 </p>
                 <button className="btn" onClick={() => seek(item.start + 0.1)}>
+                    <Crosshair />
                     Перейти к элементу
                 </button>
                 <TimingRow item={item} asset={asset} />
@@ -84,7 +86,7 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                         keyframe ? removeKeyframe() : addKeyframe()
                     }
                 >
-                    ◆{' '}
+                    <Diamond />
                     {keyframe ? 'Убрать ключ' : `Ключ на ${localT.toFixed(2)}s`}
                 </button>
                 <button
@@ -92,9 +94,11 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                     onClick={clearKeyframes}
                     disabled={item.frame.length === 0}
                 >
+                    <RotateCcw />
                     Сбросить
                 </button>
                 <button className="btn btn--ghost" onClick={splitAtPlayhead}>
+                    <Scissors />
                     Разрезать
                 </button>
             </div>
