@@ -11,6 +11,9 @@ export function Playhead({
 {
     const time = useStore((s) => s.time)
     return (
-        <div className="playhead" style={{ left: offset + time * pxPerSec }} />
+        <div
+            className="pointer-events-none absolute inset-y-0 z-[2] w-px bg-white before:absolute before:top-0 before:-left-[5px] before:border-5 before:border-transparent before:border-t-7 before:border-t-white before:content-['']"
+            style={{ left: offset + time * pxPerSec }}
+        />
     )
 }

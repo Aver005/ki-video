@@ -1,3 +1,5 @@
+// Превью кадра: рисует плеер, жесты правят окно кадрирования.
+
 import { useEffect, useRef } from 'react'
 import { getPlayer } from '@entities/player'
 import { useStore } from '@shared/model/store'
@@ -109,21 +111,21 @@ export function Preview()
     useFrameGestures(canvasRef)
 
     return (
-        <div className="preview">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center bg-background p-3">
             <canvas
                 ref={canvasRef}
-                className="preview__canvas"
+                className="h-auto max-h-full w-auto max-w-full cursor-grab touch-none rounded-lg bg-black object-contain active:cursor-grabbing"
                 width={width}
                 height={CANVAS_HEIGHT}
                 aria-label="Превью кадра"
             />
             {!hasClips && (
-                <div className="preview__hint">
+                <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 text-muted-foreground">
                     Добавь файл слева и нажми «+»
                 </div>
             )}
             {hasClips && (
-                <div className="preview__tip muted">
+                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-xs whitespace-nowrap text-muted-foreground">
                     тяни — панорама · колесо — зум · K — ключ
                 </div>
             )}

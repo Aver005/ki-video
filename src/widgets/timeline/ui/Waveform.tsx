@@ -1,3 +1,5 @@
+// Пики звука отрезка: столбик на пиксель.
+
 import { useEffect, useRef } from 'react'
 import { PEAKS_PER_SECOND } from '@core/model'
 
@@ -40,7 +42,7 @@ export function Waveform({ peaks, from, to, width, height }: WaveformProps)
             ref={ref}
             width={Math.max(1, width)}
             height={height}
-            className="waveform"
+            className="block bg-black/30"
         />
     )
 }

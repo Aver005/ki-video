@@ -1,12 +1,15 @@
-import { seek } from '@entities/player'
+// Таймлайн: линейка сверху, дорожки, субтитры и курсор.
+
 import { Plus } from 'lucide-react'
-import { useStore } from '@shared/model/store'
-import { addTrack } from '@entities/project'
-import { TrackLane } from '@app/components/TrackLane'
-import { CueLane } from '@app/components/CueLane'
-import { Playhead } from '@app/components/Playhead'
-import { projectDuration } from '@core/timeline'
 import { formatTime } from '@core/math'
+import { projectDuration } from '@core/timeline'
+import { seek } from '@entities/player'
+import { addTrack } from '@entities/project'
+import { useStore } from '@shared/model/store'
+import { Button } from '@shared/ui/button'
+import { CueLane } from '@widgets/timeline/ui/CueLane'
+import { Playhead } from '@widgets/timeline/ui/Playhead'
+import { laneHead, laneRow, TrackLane } from '@widgets/timeline/ui/TrackLane'
 
 const PAD_SEC = 5
 export const HEAD_WIDTH = 132
@@ -66,39 +69,41 @@ export function Timeline()
     )
 
     return (
-        <div className="timeline">
+        <div className="relative h-full overflow-auto">
             <div
-                className="timeline__inner"
+                className="relative min-w-full"
                 style={{ width: width + HEAD_WIDTH }}
             >
-                <div className="lane lane--ruler">
-                    <div className="lane__head">
-                        <button
-                            className="btn btn--small"
-                            onClick={() => addTrack('overlay')}
-                            title="Добавить дорожку наложений"
+                <div
+                    className={`${laneRow()} sticky top-0 z-[4] h-[30px] bg-card`}
+                >
+                    <div className={laneHead({ ruler: true })}>
+                        <Button
+                            size="xs"
+                            variant="outline"
+                            onPress={() => addTrack('overlay')}
                         >
                             <Plus />
                             слой
-                        </button>
-                        <button
-                            className="btn btn--small"
-                            onClick={() => addTrack('audio')}
-                            title="Добавить звуковую дорожку"
+                        </Button>
+                        <Button
+                            size="xs"
+                            variant="outline"
+                            onPress={() => addTrack('audio')}
                         >
                             <Plus />
                             звук
-                        </button>
+                        </Button>
                     </div>
                     <div
-                        className="ruler"
+                        className="relative h-full flex-none cursor-pointer select-none"
                         style={{ width }}
                         onPointerDown={(e) => scrub(e, pxPerSec)}
                     >
                         {ticks.map((t) => (
                             <span
                                 key={t}
-                                className="ruler__tick"
+                                className="absolute top-0 h-full border-l pl-1 font-mono text-[10px] text-muted-foreground"
                                 style={{ left: t * pxPerSec }}
                             >
                                 {Number.isInteger(t)

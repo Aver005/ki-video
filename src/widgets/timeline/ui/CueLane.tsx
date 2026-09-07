@@ -1,11 +1,15 @@
+// Дорожка субтитров: реплики тянутся так же, как элементы.
+
+import { MIN_ITEM_SECONDS, type SubtitleCue } from '@core/model'
 import { seek } from '@entities/player'
-import { useStore } from '@shared/model/store'
 import { updateCue } from '@entities/project'
 import { select, setTab } from '@shared/model/editor'
-import { startSpanDrag, type DragEdge } from '@app/components/drag'
-import { MIN_ITEM_SECONDS, type SubtitleCue } from '@core/model'
+import { useStore } from '@shared/model/store'
+import { startSpanDrag, type DragEdge } from '@widgets/timeline/lib/drag'
+import { block, handle, label } from '@widgets/timeline/ui/ItemBlock'
+import { laneBody, laneHead, laneRow } from '@widgets/timeline/ui/TrackLane'
 
-interface CueLaneProps
+export interface CueLaneProps
 {
     pxPerSec: number
     width: number
@@ -47,19 +51,27 @@ export function CueLane({ pxPerSec, width, height }: CueLaneProps)
     }
 
     return (
-        <div className="lane" style={{ height }}>
-            <div className="lane__head">
-                <span className="lane__name">Субтитры</span>
+        <div className={laneRow()} style={{ height }}>
+            <div className={laneHead()}>
+                <span className="truncate text-[11px] text-muted-foreground">
+                    Субтитры
+                </span>
             </div>
             <div
-                className="lane__body lane__body--cues"
+                className={laneBody({ kind: 'cues' })}
                 style={{ width }}
                 onPointerDown={() => select(null)}
             >
                 {cues.map((cue) => (
                     <div
                         key={cue.id}
-                        className={`item item--cue ${selection?.kind === 'cue' && selection.id === cue.id ? 'item--selected' : ''}`}
+                        className={block(
+                        {
+                            tone: 'cue',
+                            selected:
+                                selection?.kind === 'cue' &&
+                                selection.id === cue.id,
+                        })}
                         style={
                         {
                             left: cue.start * pxPerSec,
@@ -73,13 +85,13 @@ export function CueLane({ pxPerSec, width, height }: CueLaneProps)
                         onPointerDown={(e) => drag(e, cue, 'move')}
                         title={cue.text}
                     >
-                        <span className="item__label">{cue.text}</span>
+                        <span className={label}>{cue.text}</span>
                         <div
-                            className="item__handle item__handle--l"
+                            className={handle({ edge: 'start' })}
                             onPointerDown={(e) => drag(e, cue, 'start')}
                         />
                         <div
-                            className="item__handle item__handle--r"
+                            className={handle({ edge: 'end' })}
                             onPointerDown={(e) => drag(e, cue, 'end')}
                         />
                     </div>
