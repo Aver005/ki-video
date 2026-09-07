@@ -3,11 +3,6 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* Старый CSS живёт в слоях ниже утилит: мигрируем блоками и удаляем отсюда. */
-@import './theme.css' layer(base);
-@import './layout.css' layer(components);
-@import './animations.css' layer(components);
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -46,6 +41,7 @@
 }
 
 .dark {
+    color-scheme: dark;
     --background: oklch(0.141 0.005 285.823);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.21 0.006 285.885);
@@ -121,7 +117,28 @@
     * {
         @apply border-border outline-ring/50;
     }
+    html,
     body {
+        height: 100%;
+        overflow: hidden;
+        font:
+            13px/1.4 -apple-system,
+            'Segoe UI',
+            Inter,
+            system-ui,
+            sans-serif;
         @apply bg-background text-foreground;
+    }
+    /* Иконки Lucide: размер задаём здесь, чтобы не повторять его в разметке. */
+    .lucide {
+        width: 15px;
+        height: 15px;
+        flex: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation: none !important;
+            transition: none !important;
+        }
     }
 }

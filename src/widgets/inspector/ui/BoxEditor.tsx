@@ -1,3 +1,6 @@
+import { Toggle } from '@shared/ui/toggle'
+import { Button } from '@shared/ui/button'
+import { KeyChip } from '@widgets/inspector/ui/KeyChip'
 import { seek } from '@entities/player'
 import { Diamond, RotateCcw } from 'lucide-react'
 import {
@@ -9,7 +12,7 @@ import {
     updateItem,
 } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
-import { TimingRow } from '@app/components/editors/TimingRow'
+import { TimingRow } from '@widgets/inspector/ui/TimingRow'
 import { KEY_EPSILON } from '@core/keys'
 import type { MediaAsset, MediaItem, OverlayBox } from '@core/model'
 import { DEFAULT_BOX } from '@core/model'
@@ -41,8 +44,8 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
     const at = boxAt(item)
     const hasSound = asset !== undefined && asset.audioCodec !== null
     return (
-        <div className="tab-body">
-            <div className="section-title">
+        <div className="flex flex-col gap-2.5 p-3">
+            <div className="text-xs tracking-wider text-muted-foreground uppercase">
                 {withGeometry ? 'Наложение' : 'Звук'} · {asset?.name ?? '—'}
             </div>
             {withGeometry && (
@@ -67,53 +70,54 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
                             }
                         />
                     ))}
-                    <div className="row-actions">
-                        <button
-                            className={`btn ${at.keyframe ? 'btn--active' : ''}`}
-                            disabled={!at.inside}
-                            onClick={() =>
-                                at.keyframe
-                                    ? removeBoxKey(item.id)
-                                    : addBoxKey(item.id)
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <Toggle
+                            isSelected={at.keyframe !== undefined}
+                            isDisabled={!at.inside}
+                            onChange={(add) =>
+                                add ? addBoxKey(item.id) : removeBoxKey(item.id)
                             }
-                            title="Ключ движения наложения"
                         >
                             <Diamond />
                             {at.keyframe
                                 ? 'Убрать ключ'
                                 : `Ключ на ${at.localT.toFixed(2)}s`}
-                        </button>
-                        <button
-                            className="btn btn--ghost"
-                            onClick={() => clearBoxKeys(item.id)}
-                            disabled={item.boxKeys.length === 0}
+                        </Toggle>
+                        <Button
+                            variant="ghost"
+                            onPress={() => clearBoxKeys(item.id)}
+                            isDisabled={item.boxKeys.length === 0}
                         >
                             <RotateCcw />
                             Сбросить
-                        </button>
+                        </Button>
                     </div>
                     {!at.inside && (
-                        <p className="muted">
+                        <p className="text-muted-foreground">
                             Курсор вне элемента: ключ ставится там, где видно
                             наложение.
                         </p>
                     )}
                     {item.boxKeys.length > 0 && (
-                        <div className="presets">
+                        <div className="flex flex-wrap gap-1.5">
                             {item.boxKeys.map((k) => (
-                                <button
+                                <KeyChip
                                     key={k.t}
-                                    className={`chip ${Math.abs(k.t - at.localT) <= KEY_EPSILON ? 'chip--active' : ''}`}
-                                    onClick={() => seek(item.start + k.t)}
+                                    active={
+                                        Math.abs(k.t - at.localT) <= KEY_EPSILON
+                                    }
+                                    onPress={() => seek(item.start + k.t)}
                                 >
                                     {k.t.toFixed(2)}s
-                                </button>
+                                </KeyChip>
                             ))}
                         </div>
                     )}
                 </>
             )}
-            <div className="section-title">Появление</div>
+            <div className="text-xs tracking-wider text-muted-foreground uppercase">
+                Появление
+            </div>
             <SliderField
                 label="Ввод, с"
                 value={item.fadeIn}

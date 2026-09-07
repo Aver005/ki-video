@@ -1,6 +1,9 @@
+import { Textarea } from '@shared/ui/textarea'
+import { NativeSelect, NativeSelectOption } from '@shared/ui/native-select'
+import { Field } from '@shared/ui/kit/Field'
 import { updateItem } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
-import { TimingRow } from '@app/components/editors/TimingRow'
+import { TimingRow } from '@widgets/inspector/ui/TimingRow'
 import type { TextAnimation, TextItem } from '@core/model'
 
 const ANIMATIONS: { value: TextAnimation; label: string }[] = [
@@ -19,9 +22,11 @@ export function TextEditor({ item }: { item: TextItem })
     const patch = (value: Partial<TextItem>, record = true) =>
         updateItem(item.id, value, record)
     return (
-        <div className="tab-body">
-            <div className="section-title">Текст</div>
-            <textarea
+        <div className="flex flex-col gap-2.5 p-3">
+            <div className="text-xs tracking-wider text-muted-foreground uppercase">
+                Текст
+            </div>
+            <Textarea
                 value={item.text}
                 rows={3}
                 aria-label="Текст слоя"
@@ -52,32 +57,31 @@ export function TextEditor({ item }: { item: TextItem })
                 step={1}
                 onChange={(v, final) => patch({ size: v }, final)}
             />
-            <div className="field-row">
-                <label className="field">
-                    <span>Цвет</span>
+            <div className="flex gap-2">
+                <Field label="Цвет">
                     <input
                         type="color"
+                        className="h-8 w-full cursor-pointer rounded-lg border border-input bg-transparent p-1"
                         value={item.color}
                         onChange={(e) =>
                             patch({ color: e.target.value }, false)
                         }
                         onBlur={() => patch({}, true)}
                     />
-                </label>
-                <label className="field">
-                    <span>Обводка</span>
+                </Field>
+                <Field label="Обводка">
                     <input
                         type="color"
+                        className="h-8 w-full cursor-pointer rounded-lg border border-input bg-transparent p-1"
                         value={item.outline}
                         onChange={(e) =>
                             patch({ outline: e.target.value }, false)
                         }
                         onBlur={() => patch({}, true)}
                     />
-                </label>
-                <label className="field">
-                    <span>Анимация</span>
-                    <select
+                </Field>
+                <Field label="Анимация">
+                    <NativeSelect
                         value={item.animation}
                         onChange={(e) =>
                             isAnimation(e.target.value) &&
@@ -85,12 +89,12 @@ export function TextEditor({ item }: { item: TextItem })
                         }
                     >
                         {ANIMATIONS.map((a) => (
-                            <option key={a.value} value={a.value}>
+                            <NativeSelectOption key={a.value} value={a.value}>
                                 {a.label}
-                            </option>
+                            </NativeSelectOption>
                         ))}
-                    </select>
-                </label>
+                    </NativeSelect>
+                </Field>
             </div>
             <TimingRow item={item} asset={undefined} />
         </div>

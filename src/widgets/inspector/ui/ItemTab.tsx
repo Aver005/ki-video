@@ -1,12 +1,13 @@
+import { Button } from '@shared/ui/button'
 import { Pencil } from 'lucide-react'
 import { useStore } from '@shared/model/store'
 import { addText, currentContent, selectedItem } from '@entities/project'
 import { select, setTab } from '@shared/model/editor'
 import { PresetRow } from '@shared/ui/kit/PresetRow'
-import { QuickPreset } from '@app/components/QuickPreset'
-import { FrameEditor } from '@app/components/editors/FrameEditor'
-import { BoxEditor } from '@app/components/editors/BoxEditor'
-import { TextEditor } from '@app/components/editors/TextEditor'
+import { QuickPreset } from '@widgets/inspector/ui/QuickPreset'
+import { FrameEditor } from '@widgets/inspector/ui/FrameEditor'
+import { BoxEditor } from '@widgets/inspector/ui/BoxEditor'
+import { TextEditor } from '@widgets/inspector/ui/TextEditor'
 import { TEXT_PRESETS } from '@core/presets'
 import { isMediaItem, isTextItem } from '@core/model'
 
@@ -38,11 +39,11 @@ export function ItemTab()
 
     const current = currentContent()
     return (
-        <div className="tab-body">
+        <div className="flex flex-col gap-2.5 p-3">
             {current ? (
-                <button
-                    className="btn"
-                    onClick={() =>
+                <Button
+                    variant="outline"
+                    onPress={() =>
                     {
                         select({ kind: 'item', id: current.item.id })
                         setTab('item')
@@ -50,14 +51,16 @@ export function ItemTab()
                 >
                     <Pencil />
                     Править кадр: {current.asset.name}
-                </button>
+                </Button>
             ) : (
-                <p className="muted">
+                <p className="text-muted-foreground">
                     Выдели элемент на таймлайне или перетащи файл из списка
                     слева на дорожку.
                 </p>
             )}
-            <div className="section-title">Добавить текст под курсором</div>
+            <div className="text-xs tracking-wider text-muted-foreground uppercase">
+                Добавить текст под курсором
+            </div>
             <PresetRow
                 presets={TEXT_PRESETS}
                 onPick={(preset) => addText(preset.id)}

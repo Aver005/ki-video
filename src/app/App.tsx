@@ -3,7 +3,7 @@ import { useKeyboard } from '@app/hooks/useKeyboard'
 import { usePlayerBinding } from '@entities/player'
 import { MediaBin } from '@widgets/media-bin'
 import { Preview } from '@widgets/preview'
-import { Inspector } from '@app/components/Inspector'
+import { Inspector } from '@widgets/inspector'
 import { Timeline } from '@widgets/timeline'
 import { Splitter } from '@shared/ui/kit/Splitter'
 import { Notice } from '@widgets/notice'
@@ -21,15 +21,17 @@ export function App()
     const timelineHeight = useStore((s) => s.timelineHeight)
     return (
         <div
-            className="app"
+            className="grid h-screen"
             style={
             {
                 gridTemplateColumns: `${binWidth}px minmax(0, 1fr) ${inspectorWidth}px`,
                 gridTemplateRows: `44px minmax(0, 1fr) ${timelineHeight}px`,
+                gridTemplateAreas:
+                    "'header header header' 'bin stage inspector' 'timeline timeline timeline'",
             }}
         >
             <AppHeader />
-            <aside className="app__bin">
+            <aside className="relative flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-card [grid-area:bin]">
                 <MediaBin />
                 <Splitter
                     side="right"
@@ -41,11 +43,11 @@ export function App()
                     }
                 />
             </aside>
-            <main className="app__stage">
+            <main className="flex min-h-0 min-w-0 flex-col [grid-area:stage]">
                 <Preview />
                 <TransportBar />
             </main>
-            <aside className="app__inspector">
+            <aside className="relative flex min-h-0 min-w-0 flex-col overflow-hidden border-l bg-card [grid-area:inspector]">
                 <Splitter
                     side="left"
                     value={inspectorWidth}
@@ -57,7 +59,7 @@ export function App()
                 />
                 <Inspector />
             </aside>
-            <footer className="app__timeline">
+            <footer className="relative min-h-0 border-t bg-card [grid-area:timeline]">
                 <Splitter
                     side="top"
                     value={timelineHeight}

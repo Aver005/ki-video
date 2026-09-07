@@ -1,3 +1,8 @@
+import { NativeSelect, NativeSelectOption } from '@shared/ui/native-select'
+import { Field } from '@shared/ui/kit/Field'
+import { Toggle } from '@shared/ui/toggle'
+import { Button } from '@shared/ui/button'
+import { KeyChip } from '@widgets/inspector/ui/KeyChip'
 import { seek } from '@entities/player'
 import { Crosshair, Diamond, RotateCcw, Scissors } from 'lucide-react'
 import {
@@ -10,7 +15,7 @@ import {
 } from '@entities/project'
 import { splitAtPlayhead } from '@features/split-item'
 import { SliderField } from '@shared/ui/kit/SliderField'
-import { TimingRow } from '@app/components/editors/TimingRow'
+import { TimingRow } from '@widgets/inspector/ui/TimingRow'
 import { MAX_ZOOM, MIN_ZOOM } from '@core/frame'
 import { KEY_EPSILON } from '@core/keys'
 import { TRANSITIONS } from '@core/presets'
@@ -34,25 +39,31 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
     if (!current || current.item.id !== item.id)
     {
         return (
-            <div className="tab-body">
-                <p className="muted">
+            <div className="flex flex-col gap-2.5 p-3">
+                <p className="text-muted-foreground">
                     Курсор стоит вне этого элемента: окно кадра правится там,
                     где его видно.
                 </p>
-                <button className="btn" onClick={() => seek(item.start + 0.1)}>
+                <Button
+                    variant="outline"
+                    onPress={() => seek(item.start + 0.1)}
+                >
                     <Crosshair />
                     Перейти к элементу
-                </button>
+                </Button>
                 <TimingRow item={item} asset={asset} />
             </div>
         )
     }
     const { frame, keyframe, localT } = current
     return (
-        <div className="tab-body">
-            <div className="section-title">
+        <div className="flex flex-col gap-2.5 p-3">
+            <div className="text-xs tracking-wider text-muted-foreground uppercase">
                 Кадр · {asset.name}
-                <span className="muted"> {localT.toFixed(2)}s</span>
+                <span className="text-muted-foreground">
+                    {' '}
+                    {localT.toFixed(2)}s
+                </span>
             </div>
             <SliderField
                 label="Центр X"
@@ -82,43 +93,45 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                 unit="×"
                 onChange={(v, final) => setFrame({ zoom: v }, final)}
             />
-            <div className="row-actions">
-                <button
-                    className={`btn ${keyframe ? 'btn--active' : ''}`}
-                    onClick={() =>
+            <div className="flex flex-wrap items-center gap-1.5">
+                <Toggle
+                    isSelected={keyframe !== undefined}
+                    onChange={() =>
                         keyframe ? removeKeyframe() : addKeyframe()
                     }
                 >
                     <Diamond />
                     {keyframe ? 'Убрать ключ' : `Ключ на ${localT.toFixed(2)}s`}
-                </button>
-                <button
-                    className="btn btn--ghost"
-                    onClick={clearKeyframes}
-                    disabled={item.frame.length === 0}
+                </Toggle>
+                <Button
+                    variant="ghost"
+                    onPress={clearKeyframes}
+                    isDisabled={item.frame.length === 0}
                 >
                     <RotateCcw />
                     Сбросить
-                </button>
-                <button className="btn btn--ghost" onClick={splitAtPlayhead}>
+                </Button>
+                <Button variant="ghost" onPress={splitAtPlayhead}>
                     <Scissors />
                     Разрезать
-                </button>
+                </Button>
             </div>
             {item.frame.length > 0 && (
-                <div className="presets">
+                <div className="flex flex-wrap gap-1.5">
                     {item.frame.map((k) => (
-                        <button
+                        <KeyChip
                             key={k.t}
-                            className={`chip ${Math.abs(k.t - localT) <= KEY_EPSILON ? 'chip--active' : ''}`}
-                            onClick={() => seek(item.start + k.t)}
+                            active={Math.abs(k.t - localT) <= KEY_EPSILON}
+                            onPress={() => seek(item.start + k.t)}
                         >
                             {k.t.toFixed(2)}s · {k.zoom.toFixed(1)}×
-                        </button>
+                        </KeyChip>
                     ))}
                 </div>
             )}
-            <div className="section-title">Звук и переход</div>
+            <div className="text-xs tracking-wider text-muted-foreground uppercase">
+                Звук и переход
+            </div>
             <SliderField
                 label="Громкость"
                 value={item.volume}
@@ -129,9 +142,8 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                     updateItem(item.id, { volume: v }, final)
                 }
             />
-            <label className="field">
-                <span>Переход при наезде на предыдущий</span>
-                <select
+            <Field label="Переход при наезде на предыдущий">
+                <NativeSelect
                     value={item.transition}
                     onChange={(e) =>
                         isTransition(e.target.value) &&
@@ -139,13 +151,13 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                     }
                 >
                     {TRANSITIONS.map((t) => (
-                        <option key={t.id} value={t.value}>
+                        <NativeSelectOption key={t.id} value={t.value}>
                             {t.label}
-                        </option>
+                        </NativeSelectOption>
                     ))}
-                </select>
-            </label>
-            <p className="muted">
+                </NativeSelect>
+            </Field>
+            <p className="text-muted-foreground">
                 Наезд элементов на дорожке содержимого и есть длительность
                 перехода.
             </p>

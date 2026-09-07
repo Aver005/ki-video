@@ -1,3 +1,6 @@
+import { NativeSelect, NativeSelectOption } from '@shared/ui/native-select'
+import { Field } from '@shared/ui/kit/Field'
+import { Button } from '@shared/ui/button'
 import { Download, FolderOpen, X } from 'lucide-react'
 import { api } from '@shared/api/client'
 import { getState, useStore } from '@shared/model/store'
@@ -49,10 +52,9 @@ export function ExportTab()
         (s) => s.width === output.width && s.height === output.height,
     )
     return (
-        <div className="tab-body">
-            <label className="field">
-                <span>Размер</span>
-                <select
+        <div className="flex flex-col gap-2.5 p-3">
+            <Field label="Размер">
+                <NativeSelect
                     value={sizeIndex}
                     onChange={(e) =>
                     {
@@ -66,16 +68,15 @@ export function ExportTab()
                     }}
                 >
                     {SIZES.map((s, i) => (
-                        <option key={s.label} value={i}>
+                        <NativeSelectOption key={s.label} value={i}>
                             {s.label}
-                        </option>
+                        </NativeSelectOption>
                     ))}
-                </select>
-            </label>
-            <div className="field-row">
-                <label className="field">
-                    <span>Кодек</span>
-                    <select
+                </NativeSelect>
+            </Field>
+            <div className="flex gap-2">
+                <Field label="Кодек">
+                    <NativeSelect
                         value={output.codec}
                         onChange={(e) =>
                         {
@@ -87,17 +88,16 @@ export function ExportTab()
                                 })
                         }}
                     >
-                        <option value="h264">
+                        <NativeSelectOption value="h264">
                             H.264 · {status?.encoders?.h264 ?? '…'}
-                        </option>
-                        <option value="hevc">
+                        </NativeSelectOption>
+                        <NativeSelectOption value="hevc">
                             H.265 · {status?.encoders?.hevc ?? '…'}
-                        </option>
-                    </select>
-                </label>
-                <label className="field">
-                    <span>FPS</span>
-                    <select
+                        </NativeSelectOption>
+                    </NativeSelect>
+                </Field>
+                <Field label="FPS">
+                    <NativeSelect
                         value={output.fps}
                         onChange={(e) =>
                             update((p) =>
@@ -106,10 +106,10 @@ export function ExportTab()
                             })
                         }
                     >
-                        <option value={30}>30</option>
-                        <option value={60}>60</option>
-                    </select>
-                </label>
+                        <NativeSelectOption value={30}>30</NativeSelectOption>
+                        <NativeSelectOption value={60}>60</NativeSelectOption>
+                    </NativeSelect>
+                </Field>
             </div>
             <SliderField
                 label="Качество, CQ"
@@ -124,55 +124,57 @@ export function ExportTab()
                     }, final)
                 }
             />
-            <div className="row-actions">
-                <button
-                    className="btn btn--primary"
-                    disabled={running || duration === 0 || !status?.ok}
-                    onClick={() => void startExport()}
+            <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                    isDisabled={running || duration === 0 || !status?.ok}
+                    onPress={() => void startExport()}
                 >
                     <Download />
                     {running ? 'Идёт экспорт…' : 'Экспортировать'}
-                </button>
+                </Button>
                 {running && job && (
-                    <button
-                        className="btn btn--ghost"
-                        onClick={() => void api.cancelExport(job.id)}
+                    <Button
+                        variant="ghost"
+                        onPress={() => void api.cancelExport(job.id)}
                     >
                         <X />
                         Отменить
-                    </button>
+                    </Button>
                 )}
             </div>
             {job && (
-                <div className="export-status">
-                    <div className="progress">
+                <div className="flex flex-col gap-1.5">
+                    <div className="h-1 overflow-hidden rounded-sm bg-muted">
                         <div
-                            className={`progress__bar ${job.status === 'error' ? 'progress__bar--error' : ''}`}
+                            className={`h-full transition-[width] duration-200 ${job.status === 'error' ? 'bg-destructive' : 'bg-primary'}`}
                             style={
                             {
                                 width: `${Math.round(job.percent * 100)}%`,
                             }}
                         />
                     </div>
-                    <div className="muted">
+                    <div className="text-muted-foreground">
                         {job.status === 'running' &&
                             `${formatTime(job.outTime, false)} / ${formatTime(job.duration, false)} · ${job.speed}`}
                         {job.status === 'done' &&
                             `Готово за ${(((job.finishedAt ?? 0) - job.startedAt) / 1000).toFixed(1)} с`}
                         {job.status === 'error' && (
-                            <span className="error">{job.error}</span>
+                            <span className="text-destructive">
+                                {job.error}
+                            </span>
                         )}
                         {job.status === 'cancelled' && 'Отменено'}
                     </div>
                     {job.status === 'done' && (
-                        <button
-                            className="btn"
-                            onClick={() => void api.reveal(job.outFile)}
-                            title={job.outFile}
-                        >
-                            <FolderOpen />
-                            Показать файл
-                        </button>
+                        <span title={job.outFile} className="inline-flex">
+                            <Button
+                                variant="outline"
+                                onPress={() => void api.reveal(job.outFile)}
+                            >
+                                <FolderOpen />
+                                Показать файл
+                            </Button>
+                        </span>
                     )}
                 </div>
             )}

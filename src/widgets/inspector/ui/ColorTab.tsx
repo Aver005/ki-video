@@ -1,3 +1,6 @@
+import { Toggle } from '@shared/ui/toggle'
+import { Button } from '@shared/ui/button'
+import { KeyChip } from '@widgets/inspector/ui/KeyChip'
 import { seek } from '@entities/player'
 import { Diamond, RotateCcw } from 'lucide-react'
 import { useStore } from '@shared/model/store'
@@ -47,7 +50,7 @@ export function ColorTab()
     const { color, keyframe } = colorAt()
     const activeId = COLOR_PRESETS.find((p) => sameGrade(p.value, color))?.id
     return (
-        <div className="tab-body">
+        <div className="flex flex-col gap-2.5 p-3">
             <PresetRow
                 presets={COLOR_PRESETS}
                 activeId={activeId}
@@ -64,40 +67,39 @@ export function ColorTab()
                     onChange={(v, final) => setColor({ [f.key]: v }, final)}
                 />
             ))}
-            <div className="row-actions">
-                <button
-                    className={`btn ${keyframe ? 'btn--active' : ''}`}
-                    onClick={() =>
+            <div className="flex flex-wrap items-center gap-1.5">
+                <Toggle
+                    isSelected={keyframe !== undefined}
+                    onChange={() =>
                         keyframe ? removeColorKey() : addColorKey()
                     }
-                    title="Ключ цвета на шкале проекта"
                 >
                     <Diamond />
                     {keyframe ? 'Убрать ключ' : `Ключ на ${time.toFixed(2)}s`}
-                </button>
-                <button
-                    className="btn btn--ghost"
-                    onClick={clearColorKeys}
-                    disabled={keys.length === 0}
+                </Toggle>
+                <Button
+                    variant="ghost"
+                    onPress={clearColorKeys}
+                    isDisabled={keys.length === 0}
                 >
                     <RotateCcw />
                     Сбросить ключи
-                </button>
+                </Button>
             </div>
             {keys.length > 0 && (
-                <div className="presets">
+                <div className="flex flex-wrap gap-1.5">
                     {keys.map((k) => (
-                        <button
+                        <KeyChip
                             key={k.t}
-                            className={`chip ${Math.abs(k.t - time) <= KEY_EPSILON ? 'chip--active' : ''}`}
-                            onClick={() => seek(k.t)}
+                            active={Math.abs(k.t - time) <= KEY_EPSILON}
+                            onPress={() => seek(k.t)}
                         >
                             {k.t.toFixed(2)}s
-                        </button>
+                        </KeyChip>
                     ))}
                 </div>
             )}
-            <p className="muted">
+            <p className="text-muted-foreground">
                 В превью видны яркость, контраст и насыщенность. Гамма, сочность
                 и резкость — при экспорте. По ключам меняются яркость, контраст,
                 насыщенность и гамма; сочность и резкость остаются постоянными.

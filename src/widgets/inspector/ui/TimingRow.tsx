@@ -1,3 +1,4 @@
+import { Button } from '@shared/ui/button'
 import { Trash } from 'lucide-react'
 import { maxDuration, placeItem, removeItem } from '@entities/project'
 import { NumberField } from '@shared/ui/kit/NumberField'
@@ -17,7 +18,7 @@ export function TimingRow({ item, asset }: TimingRowProps)
         isMediaItem(item) && asset ? maxDuration(item, asset) : Infinity
     return (
         <>
-            <div className="field-row">
+            <div className="flex gap-2">
                 <NumberField
                     label="Начало, с"
                     className="flex-1"
@@ -43,13 +44,14 @@ export function TimingRow({ item, asset }: TimingRowProps)
                     }
                 />
             </div>
-            <button
-                className="btn btn--danger"
-                onClick={() => removeItem(item.id)}
+            <Button
+                variant="ghost"
+                className="text-destructive"
+                onPress={() => removeItem(item.id)}
             >
                 <Trash />
                 Удалить элемент
-            </button>
+            </Button>
         </>
     )
 }

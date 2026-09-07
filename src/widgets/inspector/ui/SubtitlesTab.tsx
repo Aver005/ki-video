@@ -1,3 +1,6 @@
+import { Textarea } from '@shared/ui/textarea'
+import { Button } from '@shared/ui/button'
+import { KeyChip } from '@widgets/inspector/ui/KeyChip'
 import { useState } from 'react'
 import { Check, Plus, Trash } from 'lucide-react'
 import { getState, useStore } from '@shared/model/store'
@@ -14,8 +17,8 @@ const PRESET_IDS = Object.keys(SUBTITLE_STYLES) as SubtitlePreset[]
 function CueEditor({ cue }: { cue: SubtitleCue })
 {
     return (
-        <div className="editor">
-            <textarea
+        <div className="flex flex-col gap-2 border-t pt-2">
+            <Textarea
                 value={cue.text}
                 rows={2}
                 aria-label="Текст реплики"
@@ -24,7 +27,7 @@ function CueEditor({ cue }: { cue: SubtitleCue })
                 }
                 onBlur={() => updateCue(cue.id, {}, true)}
             />
-            <div className="field-row">
+            <div className="flex gap-2">
                 <NumberField
                     label="Начало, с"
                     className="flex-1"
@@ -48,13 +51,14 @@ function CueEditor({ cue }: { cue: SubtitleCue })
                     onChange={(end) => updateCue(cue.id, { end })}
                 />
             </div>
-            <button
-                className="btn btn--danger"
-                onClick={() => removeCue(cue.id)}
+            <Button
+                variant="ghost"
+                className="text-destructive"
+                onPress={() => removeCue(cue.id)}
             >
                 <Trash />
                 Удалить реплику
-            </button>
+            </Button>
         </div>
     )
 }
@@ -96,13 +100,13 @@ export function SubtitlesTab()
     }
 
     return (
-        <div className="tab-body">
-            <div className="presets">
+        <div className="flex flex-col gap-2.5 p-3">
+            <div className="flex flex-wrap gap-1.5">
                 {PRESET_IDS.map((id) => (
-                    <button
+                    <KeyChip
                         key={id}
-                        className={`chip ${subtitles.preset === id ? 'chip--active' : ''}`}
-                        onClick={() =>
+                        active={subtitles.preset === id}
+                        onPress={() =>
                             update((p) =>
                             {
                                 p.subtitles.preset = id
@@ -110,7 +114,7 @@ export function SubtitlesTab()
                         }
                     >
                         {SUBTITLE_STYLES[id].label}
-                    </button>
+                    </KeyChip>
                 ))}
             </div>
             <SliderField
@@ -126,14 +130,14 @@ export function SubtitlesTab()
                     }, final)
                 }
             />
-            <div className="row-actions">
-                <button className="btn" onClick={addAtPlayhead}>
+            <div className="flex flex-wrap items-center gap-1.5">
+                <Button variant="outline" onPress={addAtPlayhead}>
                     <Plus />
                     Реплика под курсором
-                </button>
+                </Button>
             </div>
-            <textarea
-                className="cues"
+            <Textarea
+                className="resize-y font-mono text-xs"
                 rows={10}
                 value={draft}
                 placeholder={
@@ -142,19 +146,20 @@ export function SubtitlesTab()
                 onChange={(e) => setDraft(e.target.value)}
                 spellCheck={false}
             />
-            <div className="row-actions">
-                <button
-                    className="btn btn--primary"
-                    onClick={() => setCues(parseCues(draft))}
-                    disabled={draft === cuesKey}
+            <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                    onPress={() => setCues(parseCues(draft))}
+                    isDisabled={draft === cuesKey}
                 >
                     <Check />
                     Применить
-                </button>
-                <span className="muted">{subtitles.cues.length} реплик</span>
+                </Button>
+                <span className="text-muted-foreground">
+                    {subtitles.cues.length} реплик
+                </span>
             </div>
             {selected && <CueEditor cue={selected} />}
-            <p className="muted">
+            <p className="text-muted-foreground">
                 Распознавание речи не встроено: вставь SRT из любого сервиса.
             </p>
         </div>

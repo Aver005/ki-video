@@ -1,3 +1,6 @@
+import { CheckboxField } from '@shared/ui/kit/CheckboxField'
+import { NativeSelect, NativeSelectOption } from '@shared/ui/native-select'
+import { Field } from '@shared/ui/kit/Field'
 import { useStore } from '@shared/model/store'
 import { update } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
@@ -32,7 +35,7 @@ export function AudioTab()
             Object.assign(p.audio, value)
         }, record)
     return (
-        <div className="tab-body">
+        <div className="flex flex-col gap-2.5 p-3">
             <PresetRow
                 presets={AUDIO_PRESETS}
                 activeId={
@@ -48,38 +51,33 @@ export function AudioTab()
                 neutral={0}
                 onChange={(v, final) => patch({ denoise: v }, final)}
             />
-            <label className="check">
-                <input
-                    type="checkbox"
-                    checked={audio.highpass}
-                    onChange={(e) => patch({ highpass: e.target.checked })}
-                />
+            <CheckboxField
+                isSelected={audio.highpass}
+                onChange={(on) => patch({ highpass: on })}
+            >
                 Срез низов (80 Гц)
-            </label>
-            <label className="check">
-                <input
-                    type="checkbox"
-                    checked={audio.compressor}
-                    onChange={(e) => patch({ compressor: e.target.checked })}
-                />
+            </CheckboxField>
+            <CheckboxField
+                isSelected={audio.compressor}
+                onChange={(on) => patch({ compressor: on })}
+            >
                 Компрессор
-            </label>
-            <label className="field">
-                <span>Громкость</span>
-                <select
+            </CheckboxField>
+            <Field label="Громкость">
+                <NativeSelect
                     value={audio.loudness}
                     onChange={(e) =>
                         patch({ loudness: Number(e.target.value) })
                     }
                 >
                     {LOUDNESS.map((o) => (
-                        <option key={o.value} value={o.value}>
+                        <NativeSelectOption key={o.value} value={o.value}>
                             {o.label}
-                        </option>
+                        </NativeSelectOption>
                     ))}
-                </select>
-            </label>
-            <p className="muted">
+                </NativeSelect>
+            </Field>
+            <p className="text-muted-foreground">
                 Звуковая цепочка применяется при экспорте; превью играет
                 исходный звук.
             </p>

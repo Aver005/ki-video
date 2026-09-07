@@ -5,7 +5,7 @@ import { ArrowUp, Folder, Plus } from 'lucide-react'
 import type { FsListing } from '@core/api'
 import { api } from '@shared/api/client'
 import { Button } from '@shared/ui/button'
-import { Checkbox } from '@shared/ui/checkbox'
+import { CheckboxField } from '@shared/ui/kit/CheckboxField'
 import {
     Dialog,
     DialogFooter,
@@ -108,7 +108,7 @@ export function FileBrowser({ onPick, onClose }: FileBrowserProps)
                             {entry.name}
                         </Button>
                     ) : (
-                        <Checkbox
+                        <CheckboxField
                             key={entry.path}
                             isSelected={chosen.has(entry.path)}
                             onChange={() => toggle(entry.path)}
@@ -120,7 +120,7 @@ export function FileBrowser({ onPick, onClose }: FileBrowserProps)
                             <span className="text-muted-foreground">
                                 {formatSize(entry.size)}
                             </span>
-                        </Checkbox>
+                        </CheckboxField>
                     ),
                 )}
             </div>
