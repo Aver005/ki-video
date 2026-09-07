@@ -6,7 +6,7 @@ import { defaultFrame, frameToRegion, interpolateFrame } from '@core/frame'
 import { interpolateKeys } from '@core/keys'
 import { contentAt, projectDuration } from '@core/timeline'
 import { mediaUrl } from '@shared/api/client'
-import { drawOverlays } from '@app/player/overlays'
+import { drawOverlays } from '@entities/player/lib/overlays'
 
 export interface PlayerSource
 {

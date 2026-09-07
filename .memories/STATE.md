@@ -64,15 +64,17 @@
 Остальные 24 файла в `src/app/components` живут на старом CSS и ждут переноса.
 Старая палитра переименована в `--ki-*`: имена столкнулись с токенами shadcn.
 
+Сделано: `actions.ts` (747 строк) разобран на 12 файлов по предметам, плеер уехал в
+`entities/player`, виджеты больше не получают действия свойствами. `src/app` 4001 → 2672 строки.
+Импортов вверх по слоям — ноль (проверено поиском).
+
 Порядок дальше:
-1. Разобрать `src/app/store/actions.ts` (766 строк) на `entities/project` (история, сохранение,
-   `commit`/`update`) и features по предметам. Пока он в слое app, виджеты получают действия
-   свойствами из `App.tsx` — после разбора свойства уйдут.
-2. `player/Player.ts` и `hooks/usePlayer.ts` → `entities/player` или `shared/lib/player`:
-   от них зависит `seek`.
-3. Виджеты по одному: `Inspector` (вкладки → `shared/ui/tabs`), `MediaBin`, `Timeline`, `Preview`,
-   `FileBrowser` (→ `shared/ui/dialog`), `Splitter` (кандидат на замену компонентом `resizable`).
-4. По мере переноса вычищать блоки из `layout.css`; когда файл опустеет — убрать импорт слоя.
+1. Виджеты по одному: `Inspector` (вкладки → `shared/ui/tabs`), `MediaBin`, `Timeline`, `Preview`,
+   `FileBrowser` (→ `shared/ui/dialog`), `Splitter` (кандидат на замену компонентом `resizable`),
+   `Notice` (→ `sonner`).
+2. `hooks/useBootstrap`, `hooks/useKeyboard`, `ws.ts`, `components/drag.ts` — в `app` или `shared`
+   по месту использования.
+3. По мере переноса вычищать блоки из `layout.css` (715 строк); когда файл опустеет — убрать импорт слоя.
 
 ## Не сделано / отложено `[TODO]`
 

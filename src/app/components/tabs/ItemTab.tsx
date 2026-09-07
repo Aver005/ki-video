@@ -1,12 +1,7 @@
 import { Pencil } from 'lucide-react'
 import { useStore } from '@shared/model/store'
-import {
-    addText,
-    currentContent,
-    select,
-    selectedItem,
-    setTab,
-} from '@app/store/actions'
+import { addText, currentContent, selectedItem } from '@entities/project'
+import { select, setTab } from '@shared/model/editor'
 import { PresetRow } from '@app/components/PresetRow'
 import { QuickPreset } from '@app/components/QuickPreset'
 import { FrameEditor } from '@app/components/editors/FrameEditor'

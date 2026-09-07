@@ -4,7 +4,7 @@ import type { ServerEvent } from '@core/api'
 import type { MediaAsset } from '@core/model'
 import { setState } from '@shared/model/store'
 import { api } from '@shared/api/client'
-import { getPlayer } from '@app/hooks/usePlayer'
+import { getPlayer } from '@entities/player'
 
 const RECONNECT_MS = 1500
 

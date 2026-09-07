@@ -4,7 +4,8 @@ import { useEffect } from 'react'
 import { api } from '@shared/api/client'
 import { connectEvents } from '@app/ws'
 import { setState } from '@shared/model/store'
-import { notify, saveOnUnload } from '@app/store/actions'
+import { saveOnUnload } from '@entities/project'
+import { notify } from '@shared/model/editor'
 import type { MediaAsset } from '@core/model'
 
 function byId(list: MediaAsset[]): Record<string, MediaAsset>

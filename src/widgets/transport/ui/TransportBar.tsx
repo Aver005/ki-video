@@ -3,21 +3,19 @@
 import type { ReactNode } from 'react'
 import { Diamond, Pause, Play, Scissors, SkipBack } from 'lucide-react'
 import { formatTime } from '@core/math'
-import { useProjectDuration } from '@entities/project'
-import { useCurrentContent } from '@entities/timeline'
+import {
+    addKeyframe,
+    removeKeyframe,
+    useCurrentContent,
+    useProjectDuration,
+} from '@entities/project'
+import { getPlayer, seek } from '@entities/player'
+import { splitAtPlayhead } from '@features/split-item'
+import { setZoom } from '@shared/model/editor'
 import { useStore } from '@shared/model/store'
 import { Button } from '@shared/ui/button'
 import { Slider } from '@shared/ui/slider'
 import { Toggle } from '@shared/ui/toggle'
-
-export interface TransportBarProps
-{
-    onRewind: () => void
-    onTogglePlay: () => void
-    onKeyframeChange: (add: boolean) => void
-    onSplit: () => void
-    onZoom: (pxPerSec: number) => void
-}
 
 /** Подсказка нативным title: кнопки бывают отключены, а всплывашка RAC на таких не показывается. */
 function Hint({ text, children }: { text: string; children: ReactNode })
@@ -29,13 +27,7 @@ function Hint({ text, children }: { text: string; children: ReactNode })
     )
 }
 
-export function TransportBar({
-    onRewind,
-    onTogglePlay,
-    onKeyframeChange,
-    onSplit,
-    onZoom,
-}: TransportBarProps)
+export function TransportBar()
 {
     const time = useStore((s) => s.time)
     const playing = useStore((s) => s.playing)
@@ -49,7 +41,7 @@ export function TransportBar({
                 <Button
                     variant="outline"
                     size="icon"
-                    onPress={onRewind}
+                    onPress={() => seek(0)}
                     aria-label="В начало"
                 >
                     <SkipBack />
@@ -58,7 +50,7 @@ export function TransportBar({
             <Hint text="Пробел">
                 <Button
                     size="icon"
-                    onPress={onTogglePlay}
+                    onPress={() => getPlayer().toggle()}
                     isDisabled={duration === 0}
                     aria-label={playing ? 'Пауза' : 'Играть'}
                 >
@@ -76,7 +68,7 @@ export function TransportBar({
                 <Toggle
                     isSelected={hasKey}
                     isDisabled={!current}
-                    onChange={onKeyframeChange}
+                    onChange={(add) => (add ? addKeyframe() : removeKeyframe())}
                 >
                     <Diamond />
                     {hasKey ? 'Убрать ключ' : 'Ключ'}
@@ -86,7 +78,7 @@ export function TransportBar({
                 <Button
                     variant="outline"
                     isDisabled={!current}
-                    onPress={onSplit}
+                    onPress={splitAtPlayhead}
                 >
                     <Scissors />
                     Разрезать
@@ -98,7 +90,7 @@ export function TransportBar({
                 minValue={10}
                 maxValue={200}
                 value={pxPerSec}
-                onChange={onZoom}
+                onChange={setZoom}
             />
         </div>
     )

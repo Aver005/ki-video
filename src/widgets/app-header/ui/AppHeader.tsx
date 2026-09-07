@@ -4,22 +4,17 @@ import { Download } from 'lucide-react'
 import { TextField } from 'react-aria-components'
 import { formatTime } from '@core/math'
 import {
+    update,
     useExportJob,
     useProject,
     useProjectDuration,
     useServerStatus,
 } from '@entities/project'
+import { setTab } from '@shared/model/editor'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 
-export interface AppHeaderProps
-{
-    /** Действия приходят из слоя app: виджет не знает, как устроен стор действий. */
-    onRename: (name: string) => void
-    onExport: () => void
-}
-
-export function AppHeader({ onRename, onExport }: AppHeaderProps)
+export function AppHeader()
 {
     const project = useProject()
     const status = useServerStatus()
@@ -33,7 +28,12 @@ export function AppHeader({ onRename, onExport }: AppHeaderProps)
             <TextField
                 aria-label="Название проекта"
                 value={project?.name ?? ''}
-                onChange={onRename}
+                onChange={(name) =>
+                    update((p) =>
+                    {
+                        p.name = name
+                    }, false)
+                }
                 className="max-w-90 flex-1"
             >
                 <Input
@@ -51,7 +51,10 @@ export function AppHeader({ onRename, onExport }: AppHeaderProps)
                 />
                 <span>{status?.hwaccel ? 'NVENC' : status ? 'CPU' : ''}</span>
             </div>
-            <Button onPress={onExport} isDisabled={!project || duration === 0}>
+            <Button
+                onPress={() => setTab('export')}
+                isDisabled={!project || duration === 0}
+            >
                 <Download />
                 {running ? `Экспорт ${percent}%` : 'Экспорт'}
             </Button>

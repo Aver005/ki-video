@@ -1,5 +1,7 @@
+import { seek } from '@entities/player'
 import { useStore } from '@shared/model/store'
-import { seek, select, setTab, updateCue } from '@app/store/actions'
+import { updateCue } from '@entities/project'
+import { select, setTab } from '@shared/model/editor'
 import { startSpanDrag, type DragEdge } from '@app/components/drag'
 import { MIN_ITEM_SECONDS, type SubtitleCue } from '@core/model'
 

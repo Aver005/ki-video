@@ -1,6 +1,7 @@
+import { seek } from '@entities/player'
 import { Plus } from 'lucide-react'
 import { useStore } from '@shared/model/store'
-import { addTrack, seek } from '@app/store/actions'
+import { addTrack } from '@entities/project'
 import { TrackLane } from '@app/components/TrackLane'
 import { CueLane } from '@app/components/CueLane'
 import { Playhead } from '@app/components/Playhead'

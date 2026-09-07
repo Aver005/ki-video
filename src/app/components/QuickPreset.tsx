@@ -1,5 +1,5 @@
 import { Sparkles } from 'lucide-react'
-import { setColor, update } from '@app/store/actions'
+import { setColor, update } from '@entities/project'
 import { AUDIO_PRESETS, COLOR_PRESETS } from '@core/presets'
 
 /** Один пресет на весь сценарий: сочный цвет, чистый голос, жирные субтитры. */

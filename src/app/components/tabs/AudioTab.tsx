@@ -1,5 +1,5 @@
 import { useStore } from '@shared/model/store'
-import { update } from '@app/store/actions'
+import { update } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
 import { PresetRow } from '@app/components/PresetRow'
 import { AUDIO_PRESETS } from '@core/presets'

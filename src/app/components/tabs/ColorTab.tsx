@@ -1,3 +1,4 @@
+import { seek } from '@entities/player'
 import { Diamond, RotateCcw } from 'lucide-react'
 import { useStore } from '@shared/model/store'
 import {
@@ -5,9 +6,8 @@ import {
     clearColorKeys,
     colorAt,
     removeColorKey,
-    seek,
     setColor,
-} from '@app/store/actions'
+} from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
 import { PresetRow } from '@app/components/PresetRow'
 import { COLOR_PRESETS } from '@core/presets'

@@ -1,4 +1,4 @@
-import { updateItem } from '@app/store/actions'
+import { updateItem } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
 import { TimingRow } from '@app/components/editors/TimingRow'
 import type { TextAnimation, TextItem } from '@core/model'

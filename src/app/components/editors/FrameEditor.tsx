@@ -1,14 +1,14 @@
+import { seek } from '@entities/player'
 import { Crosshair, Diamond, RotateCcw, Scissors } from 'lucide-react'
 import {
     addKeyframe,
     clearKeyframes,
     currentContent,
     removeKeyframe,
-    seek,
     setFrame,
-    splitAtPlayhead,
     updateItem,
-} from '@app/store/actions'
+} from '@entities/project'
+import { splitAtPlayhead } from '@features/split-item'
 import { SliderField } from '@shared/ui/kit/SliderField'
 import { TimingRow } from '@app/components/editors/TimingRow'
 import { MAX_ZOOM, MIN_ZOOM } from '@core/frame'

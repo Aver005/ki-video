@@ -15,20 +15,26 @@ src/server  ← Bun: процессы ffmpeg, файлы, HTTP/WS. Зависи�
 ### Feature-Sliced Design в интерфейсе
 
 ```
-src/app       ← точка входа, App.tsx, стили, оставшийся неперенесённый код
+src/app       ← точка входа, App.tsx, стили, ещё не перенесённые компоненты
 src/pages     ← пока пусто
 src/widgets   ← app-header, transport
-src/features  ← пока пусто
-src/entities  ← project (селекторы), timeline (текущий элемент под курсором)
-src/shared    ← ui (компоненты shadcn), api/client.ts, model/store.ts, lib, hooks
+src/features  ← split-item
+src/entities  ← project (документ целиком), player, asset
+src/shared    ← ui (shadcn) и ui/kit (свои составные), api/client.ts, model/{store,editor}.ts
 ```
+
+`entities/project` — один срез на весь документ, сегменты по предметам:
+`session` (история, сохранение, `commit`/`update`), `tracks`, `items`, `frame`, `box`, `color`,
+`subtitles`, `current` (элемент под курсором), `selectors` (хуки чтения).
+Отдельного `entities/timeline` нет намеренно: дорожки и элементы живут внутри проекта, и на каждую
+правку получался бы импорт внутри одного слоя.
 
 Слой видит только слои ниже себя плюс `@core/*`. Импорты всегда через алиасы, в том числе внутри
 среза: `@app/*`, `@pages/*`, `@widgets/*`, `@features/*`, `@entities/*`, `@shared/*`, `@core/*`.
 Публичный вход среза — его `index.ts`; исключение `@shared/ui/*`, куда файлы кладёт CLI shadcn.
 
-Незакрытый долг миграции: `src/app/store/actions.ts` (766 строк) — слой app, поэтому слои ниже
-его не видят. Пока действия попадают в виджеты свойствами из `App.tsx`.
+Направление импортов проверяется поиском: `@app/*` из нижних слоёв — ноль вхождений,
+`shared → entities/features/widgets` — ноль, `entities → features/widgets` — ноль.
 
 ## Поток данных
 

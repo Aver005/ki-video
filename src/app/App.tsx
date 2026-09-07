@@ -1,22 +1,12 @@
 import { useBootstrap } from '@app/hooks/useBootstrap'
 import { useKeyboard } from '@app/hooks/useKeyboard'
-import { usePlayerBinding } from '@app/hooks/usePlayer'
+import { usePlayerBinding } from '@entities/player'
 import { MediaBin } from '@app/components/MediaBin'
 import { Preview } from '@app/components/Preview'
 import { Inspector } from '@app/components/Inspector'
 import { Timeline } from '@app/components/Timeline'
 import { Splitter } from '@app/components/Splitter'
 import { Notice } from '@app/components/Notice'
-import {
-    addKeyframe,
-    removeKeyframe,
-    seek,
-    setTab,
-    setZoom,
-    splitAtPlayhead,
-    update,
-} from '@app/store/actions'
-import { getPlayer } from '@app/hooks/usePlayer'
 import { AppHeader } from '@widgets/app-header'
 import { TransportBar } from '@widgets/transport'
 import { resizeLayout, useStore } from '@shared/model/store'
@@ -38,15 +28,7 @@ export function App()
                 gridTemplateRows: `44px minmax(0, 1fr) ${timelineHeight}px`,
             }}
         >
-            <AppHeader
-                onRename={(name) =>
-                    update((p) =>
-                    {
-                        p.name = name
-                    }, false)
-                }
-                onExport={() => setTab('export')}
-            />
+            <AppHeader />
             <aside className="app__bin">
                 <MediaBin />
                 <Splitter
@@ -61,15 +43,7 @@ export function App()
             </aside>
             <main className="app__stage">
                 <Preview />
-                <TransportBar
-                    onRewind={() => seek(0)}
-                    onTogglePlay={() => getPlayer().toggle()}
-                    onKeyframeChange={(add) =>
-                        add ? addKeyframe() : removeKeyframe()
-                    }
-                    onSplit={splitAtPlayhead}
-                    onZoom={setZoom}
-                />
+                <TransportBar />
             </main>
             <aside className="app__inspector">
                 <Splitter

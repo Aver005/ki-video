@@ -1,11 +1,7 @@
 import { Eye, EyeOff, Volume2, VolumeX, X } from 'lucide-react'
 import { getState, useStore } from '@shared/model/store'
-import {
-    addAssetToTimeline,
-    removeTrack,
-    select,
-    updateTrack,
-} from '@app/store/actions'
+import { addAssetToTimeline, removeTrack, updateTrack } from '@entities/project'
+import { select } from '@shared/model/editor'
 import { ItemBlock } from '@app/components/ItemBlock'
 import { sortedItems } from '@core/timeline'
 import type { Track } from '@core/model'

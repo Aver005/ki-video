@@ -1,15 +1,9 @@
 // Горячие клавиши редактора: пробел, стрелки, удаление, отмена, разрез, ключевой кадр. По e.code, чтобы раскладка не мешала.
 
 import { useEffect } from 'react'
-import {
-    addKeyframe,
-    deleteSelection,
-    redo,
-    seek,
-    splitAtPlayhead,
-    undo,
-} from '@app/store/actions'
-import { getPlayer } from '@app/hooks/usePlayer'
+import { addKeyframe, deleteSelection, redo, undo } from '@entities/project'
+import { splitAtPlayhead } from '@features/split-item'
+import { getPlayer, seek } from '@entities/player'
 import { getState } from '@shared/model/store'
 
 const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])

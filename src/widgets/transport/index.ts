@@ -1,4 +1,1 @@
-export {
-    TransportBar,
-    type TransportBarProps,
-} from '@widgets/transport/ui/TransportBar'
+export { TransportBar } from '@widgets/transport/ui/TransportBar'

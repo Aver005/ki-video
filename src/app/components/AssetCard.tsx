@@ -1,6 +1,7 @@
 import { Music, Plus, X } from 'lucide-react'
 import { thumbUrl } from '@shared/api/client'
-import { addAssetToTimeline, removeAsset } from '@app/store/actions'
+import { removeAsset } from '@entities/asset'
+import { addAssetToTimeline } from '@entities/project'
 import { ASSET_DRAG_TYPE } from '@app/components/TrackLane'
 import { formatTime } from '@core/math'
 import type { BinView } from '@shared/model/store'

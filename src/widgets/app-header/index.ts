@@ -1,4 +1,1 @@
-export {
-    AppHeader,
-    type AppHeaderProps,
-} from '@widgets/app-header/ui/AppHeader'
+export { AppHeader } from '@widgets/app-header/ui/AppHeader'

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { LayoutGrid, List, Plus, Rows3, type LucideIcon } from 'lucide-react'
 import { api } from '@shared/api/client'
 import { resizeLayout, useStore, type BinView } from '@shared/model/store'
-import { notify } from '@app/store/actions'
+import { notify } from '@shared/model/editor'
 import { AssetCard } from '@app/components/AssetCard'
 import { FileBrowser } from '@app/components/FileBrowser'
 

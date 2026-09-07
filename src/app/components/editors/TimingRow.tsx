@@ -1,5 +1,5 @@
 import { Trash } from 'lucide-react'
-import { maxDuration, placeItem, removeItem } from '@app/store/actions'
+import { maxDuration, placeItem, removeItem } from '@entities/project'
 import { NumberField } from '@shared/ui/kit/NumberField'
 import { MIN_ITEM_SECONDS, isMediaItem } from '@core/model'
 import type { Item, MediaAsset } from '@core/model'

@@ -1,12 +1,7 @@
 import { thumbUrl } from '@shared/api/client'
 import { useStore } from '@shared/model/store'
-import {
-    maxDuration,
-    placeItem,
-    select,
-    setTab,
-    snapPoints,
-} from '@app/store/actions'
+import { maxDuration, placeItem, snapPoints } from '@entities/project'
+import { select, setTab } from '@shared/model/editor'
 import { Waveform } from '@app/components/Waveform'
 import { startSpanDrag, type DragEdge } from '@app/components/drag'
 import {

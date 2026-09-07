@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Check, Plus, Trash } from 'lucide-react'
 import { getState, useStore } from '@shared/model/store'
-import { removeCue, setCues, update, updateCue } from '@app/store/actions'
+import { removeCue, setCues, update, updateCue } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
 import { NumberField } from '@shared/ui/kit/NumberField'
 import { SUBTITLE_STYLES } from '@core/presets'

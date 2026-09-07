@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { getPlayer } from '@app/hooks/usePlayer'
+import { getPlayer } from '@entities/player'
 import { useStore } from '@shared/model/store'
-import { currentContent, setFrame } from '@app/store/actions'
+import { currentContent, setFrame } from '@entities/project'
 import { frameToRegion } from '@core/frame'
 
 const CANVAS_HEIGHT = 960

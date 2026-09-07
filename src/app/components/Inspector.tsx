@@ -1,5 +1,5 @@
 import { useStore, type InspectorTab } from '@shared/model/store'
-import { setTab } from '@app/store/actions'
+import { setTab } from '@shared/model/editor'
 import { ItemTab } from '@app/components/tabs/ItemTab'
 import { ColorTab } from '@app/components/tabs/ColorTab'
 import { AudioTab } from '@app/components/tabs/AudioTab'

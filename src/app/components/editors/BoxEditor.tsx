@@ -1,13 +1,13 @@
+import { seek } from '@entities/player'
 import { Diamond, RotateCcw } from 'lucide-react'
 import {
     addBoxKey,
     boxAt,
     clearBoxKeys,
     removeBoxKey,
-    seek,
     setBox,
     updateItem,
-} from '@app/store/actions'
+} from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
 import { TimingRow } from '@app/components/editors/TimingRow'
 import { KEY_EPSILON } from '@core/keys'
