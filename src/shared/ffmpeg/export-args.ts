@@ -318,7 +318,7 @@ function buildOverlays(
                     `[${index}:v]${placement.filters.join(',')}[${layer}]`,
                 )
                 builder.line(
-                    `[${current}][${layer}]overlay=${placement.x}:${placement.y}:eof_action=pass:enable='between(t,${num(item.start, 3)},${num(item.start + item.duration, 3)})'[${next}]`,
+                    `[${current}][${layer}]overlay=x='${placement.x}':y='${placement.y}':eof_action=pass:enable='between(t,${num(item.start, 3)},${num(item.start + item.duration, 3)})'[${next}]`,
                 )
                 current = next
                 counter += 1
@@ -372,7 +372,7 @@ export function buildExportPlan(
         crossfades(segments),
         content?.muted ?? true,
     )
-    const graded = colorFilters(project.color)
+    const graded = colorFilters(project.color, project.colorKeys)
     const colored = `bc`
     builder.line(`[${base}]${[...graded, 'copy'].join(',')}[${colored}]`)
 

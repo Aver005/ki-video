@@ -15,6 +15,7 @@ import {
     SOFTWARE_CAPS,
 } from '@shared/ffmpeg/export-args'
 import { createProject, NEUTRAL_COLOR, SILENT_AUDIO } from '@shared/model'
+import type { BoxKeyframe, ColorKeyframe } from '@shared/model'
 import type { Project } from '@shared/model'
 import { num } from '@shared/math'
 import {
@@ -206,13 +207,71 @@ describe('filters', () =>
             'fps=60',
             'scale=270:270:flags=bicubic',
             'format=yuva420p',
-            'rotate=1.5708:c=none:ow=rotw(1.5708):oh=roth(1.5708)',
+            "rotate=1.5708:c=black@0:ow='rotw(1.5708)':oh='roth(1.5708)'",
             'colorchannelmixer=aa=0.5',
             'fade=t=in:st=0:d=0.5:alpha=1',
             'setpts=PTS-STARTPTS+2/TB',
         ])
-        expect(placement.x).toBe(405)
-        expect(placement.y).toBe(345)
+        expect(placement.x).toBe('(0.5)*W-w/2')
+        expect(placement.y).toBe('(0.25)*H-h/2')
+    })
+    test('ключи наложения дают выражения по времени вместо чисел', () =>
+    {
+        const keys: BoxKeyframe[] = [
+            { t: 0, x: 0.2, y: 0.5, width: 0.2, rotation: 0, opacity: 1 },
+            { t: 2, x: 0.8, y: 0.5, width: 0.4, rotation: 90, opacity: 0.5 },
+        ]
+        const placement = overlayFilters(
+            item(
+            {
+                assetId: imageAsset.id,
+                start: 1,
+                duration: 2,
+                boxKeys: keys,
+            }),
+            imageAsset,
+            output,
+        )
+        const chain = placement.filters.join(' | ')
+        expect(chain).toContain('eval=frame')
+        expect(chain).toContain("rotate=a='if(lt(t,2)")
+        expect(chain).toContain('geq=lum=')
+        // Ключи по x идут по шкале базы, поэтому сдвинуты на начало элемента.
+        expect(placement.x).toContain('if(lt(t,3)')
+        expect(placement.x).toEndWith('*W-w/2')
+        expect(placement.y).toBe('(0.5)*H-h/2')
+    })
+    test('ключи с одинаковыми значениями остаются неподвижными фильтрами', () =>
+    {
+        const same: BoxKeyframe[] = [
+            { t: 0, x: 0.5, y: 0.5, width: 0.25, rotation: 0, opacity: 1 },
+            { t: 2, x: 0.5, y: 0.5, width: 0.25, rotation: 0, opacity: 1 },
+        ]
+        const placement = overlayFilters(
+            item({ assetId: imageAsset.id, duration: 2, boxKeys: same }),
+            imageAsset,
+            output,
+        )
+        expect(placement.filters).toEqual([
+            'fps=60',
+            'scale=270:270:flags=bicubic',
+            'format=yuva420p',
+            'setpts=PTS-STARTPTS+0/TB',
+        ])
+    })
+    test('ключи цвета включают eq с выражениями, сочность остаётся постоянной', () =>
+    {
+        const keys: ColorKeyframe[] = [
+            { t: 0, ...NEUTRAL_COLOR, vibrance: 0.3 },
+            { t: 4, ...NEUTRAL_COLOR, contrast: 1.5, vibrance: 0.3 },
+        ]
+        const filters = colorFilters(NEUTRAL_COLOR, keys)
+        expect(filters[0]).toStartWith("eq=brightness='0'")
+        expect(filters[0]).toContain(
+            "contrast='if(lt(t,4),1+(1.5-1)*(t-0)/4,1.5)'",
+        )
+        expect(filters[0]).toEndWith(':eval=frame')
+        expect(filters[1]).toBe('vibrance=intensity=0.3')
     })
     test('нейтральный цвет — пусто, пресет даёт eq/vibrance/unsharp', () =>
     {
@@ -365,7 +424,7 @@ describe('buildExportPlan', () =>
         )
         expect(result.args).toContain('-loop')
         expect(result.graph).toContain(
-            "overlay=324:744:eof_action=pass:enable='between(t,1,3)'[bo0]",
+            "overlay=x='(0.5)*W-w/2':y='(0.5)*H-h/2':eof_action=pass:enable='between(t,1,3)'[bo0]",
         )
     })
 

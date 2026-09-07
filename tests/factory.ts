@@ -67,6 +67,7 @@ export function item(patch: Partial<MediaItem> = {}): MediaItem
         offset: 0,
         frame: [],
         box: { ...DEFAULT_BOX },
+        boxKeys: [],
         volume: 1,
         fadeIn: 0,
         fadeOut: 0,

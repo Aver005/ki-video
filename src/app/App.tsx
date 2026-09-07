@@ -9,24 +9,14 @@ import { Inspector } from '@app/components/Inspector'
 import { Timeline } from '@app/components/Timeline'
 import { Splitter } from '@app/components/Splitter'
 import { Notice } from '@app/components/Notice'
-import { getState, saveLayout, setState, useStore } from '@app/store/store'
-
-function resize(
-    patch: { inspectorWidth?: number; timelineHeight?: number },
-    final: boolean,
-): void
-{
-    setState(patch)
-    if (!final) return
-    const { inspectorWidth, timelineHeight } = getState()
-    saveLayout({ inspectorWidth, timelineHeight })
-}
+import { resizeLayout, useStore } from '@app/store/store'
 
 export function App()
 {
     useBootstrap()
     usePlayerBinding()
     useKeyboard()
+    const binWidth = useStore((s) => s.binWidth)
     const inspectorWidth = useStore((s) => s.inspectorWidth)
     const timelineHeight = useStore((s) => s.timelineHeight)
     return (
@@ -34,13 +24,22 @@ export function App()
             className="app"
             style={
             {
-                gridTemplateColumns: `260px minmax(0, 1fr) ${inspectorWidth}px`,
+                gridTemplateColumns: `${binWidth}px minmax(0, 1fr) ${inspectorWidth}px`,
                 gridTemplateRows: `44px minmax(0, 1fr) ${timelineHeight}px`,
             }}
         >
             <Header />
             <aside className="app__bin">
                 <MediaBin />
+                <Splitter
+                    side="right"
+                    value={binWidth}
+                    min={180}
+                    max={560}
+                    onChange={(v, final) =>
+                        resizeLayout({ binWidth: v }, final)
+                    }
+                />
             </aside>
             <main className="app__stage">
                 <Preview />
@@ -48,24 +47,24 @@ export function App()
             </main>
             <aside className="app__inspector">
                 <Splitter
-                    axis="x"
+                    side="left"
                     value={inspectorWidth}
                     min={280}
                     max={720}
                     onChange={(v, final) =>
-                        resize({ inspectorWidth: v }, final)
+                        resizeLayout({ inspectorWidth: v }, final)
                     }
                 />
                 <Inspector />
             </aside>
             <footer className="app__timeline">
                 <Splitter
-                    axis="y"
+                    side="top"
                     value={timelineHeight}
                     min={160}
                     max={800}
                     onChange={(v, final) =>
-                        resize({ timelineHeight: v }, final)
+                        resizeLayout({ timelineHeight: v }, final)
                     }
                 />
                 <Timeline />

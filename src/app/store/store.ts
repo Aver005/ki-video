@@ -6,6 +6,9 @@ import type { ExportJob, StatusResponse } from '@shared/api'
 
 export type InspectorTab = 'item' | 'color' | 'audio' | 'subtitles' | 'export'
 
+/** Как показывать медиатеку: строками, плиткой или одной строкой на файл. */
+export type BinView = 'list' | 'grid' | 'compact'
+
 export type Selection =
     | { kind: 'item'; id: string }
     | { kind: 'cue'; id: string }
@@ -26,7 +29,9 @@ export interface EditorState
     future: Project[]
     /** Пикселей на секунду на таймлайне. */
     pxPerSec: number
-    /** Размеры панелей: тянутся мышью и переживают перезапуск. */
+    /** Размеры панелей и вид медиатеки: тянутся мышью и переживают перезапуск. */
+    binWidth: number
+    binView: BinView
     inspectorWidth: number
     timelineHeight: number
     notice: string | null
@@ -36,11 +41,21 @@ const LAYOUT_KEY = 'ki-video:layout'
 
 interface Layout
 {
+    binWidth: number
+    binView: BinView
     inspectorWidth: number
     timelineHeight: number
 }
 
-const DEFAULT_LAYOUT: Layout = { inspectorWidth: 380, timelineHeight: 300 }
+const BIN_VIEWS: readonly BinView[] = ['list', 'grid', 'compact']
+
+const DEFAULT_LAYOUT: Layout =
+{
+    binWidth: 260,
+    binView: 'list',
+    inspectorWidth: 380,
+    timelineHeight: 300,
+}
 
 function readLayout(): Layout
 {
@@ -49,6 +64,13 @@ function readLayout(): Layout
         const raw = localStorage.getItem(LAYOUT_KEY)
         const parsed = raw ? (JSON.parse(raw) as Partial<Layout>) : {}
         return {
+            binWidth:
+                typeof parsed.binWidth === 'number'
+                    ? parsed.binWidth
+                    : DEFAULT_LAYOUT.binWidth,
+            binView: BIN_VIEWS.includes(parsed.binView as BinView)
+                ? (parsed.binView as BinView)
+                : DEFAULT_LAYOUT.binView,
             inspectorWidth:
                 typeof parsed.inspectorWidth === 'number'
                     ? parsed.inspectorWidth
@@ -65,7 +87,7 @@ function readLayout(): Layout
     }
 }
 
-export function saveLayout(layout: Layout): void
+function saveLayout(layout: Layout): void
 {
     try
     {
@@ -75,6 +97,15 @@ export function saveLayout(layout: Layout): void
     {
         // Приватный режим браузера: размеры просто не запомнятся.
     }
+}
+
+/** Размеры панелей живут в сторе, а на отпускании мыши уходят в localStorage. */
+export function resizeLayout(patch: Partial<Layout>, final: boolean): void
+{
+    setState(patch)
+    if (!final) return
+    const { binWidth, binView, inspectorWidth, timelineHeight } = state
+    saveLayout({ binWidth, binView, inspectorWidth, timelineHeight })
 }
 
 const layout = readLayout()
@@ -93,6 +124,8 @@ const initial: EditorState =
     history: [],
     future: [],
     pxPerSec: 40,
+    binWidth: layout.binWidth,
+    binView: layout.binView,
     inspectorWidth: layout.inspectorWidth,
     timelineHeight: layout.timelineHeight,
     notice: null,

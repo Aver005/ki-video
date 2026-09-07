@@ -134,6 +134,22 @@ function normalizeBox(value: unknown): OverlayBox
     }
 }
 
+function normalizeBoxKeys(value: unknown): MediaItem['boxKeys']
+{
+    return asArray(value)
+        .filter(isRecord)
+        .map((raw) => ({ ...normalizeBox(raw), t: asNumber(raw['t'], 0, 0) }))
+        .sort((a, b) => a.t - b.t)
+}
+
+function normalizeColorKeys(value: unknown): Project['colorKeys']
+{
+    return asArray(value)
+        .filter(isRecord)
+        .map((raw) => ({ ...normalizeColor(raw), t: asNumber(raw['t'], 0, 0) }))
+        .sort((a, b) => a.t - b.t)
+}
+
 function normalizeFrame(value: unknown): MediaItem['frame']
 {
     return asArray(value)
@@ -188,6 +204,7 @@ function normalizeMediaItem(
         offset: asNumber(raw['offset'], 0, 0),
         frame: normalizeFrame(raw['frame']),
         box: normalizeBox(raw['box']),
+        boxKeys: normalizeBoxKeys(raw['boxKeys']),
         volume: asNumber(raw['volume'], 1, 0),
         fadeIn: asNumber(raw['fadeIn'], 0, 0),
         fadeOut: asNumber(raw['fadeOut'], 0, 0),
@@ -290,6 +307,7 @@ export function normalizeProject(value: unknown): Project | null
         ),
         output: normalizeOutput(value['output']),
         color: normalizeColor(value['color']),
+        colorKeys: normalizeColorKeys(value['colorKeys']),
         audio: normalizeAudio(value['audio']),
         subtitles: normalizeSubtitles(value['subtitles']),
     }

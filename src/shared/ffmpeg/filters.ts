@@ -2,7 +2,9 @@
 
 import type {
     AudioChain,
+    BoxKeyframe,
     ColorGrade,
+    ColorKeyframe,
     FrameKeyframe,
     MediaAsset,
     MediaItem,
@@ -11,6 +13,7 @@ import type {
 } from '@shared/model'
 import { NEUTRAL_COLOR } from '@shared/model'
 import { baseWindow, defaultFrame, MAX_ZOOM } from '@shared/frame'
+import { keyPoints, varies } from '@shared/keys'
 import { num } from '@shared/math'
 import { clipExpr, piecewiseLinear, type TimePoint } from '@shared/ffmpeg/expr'
 
@@ -93,9 +96,14 @@ function evenRound(value: number): number
 export interface OverlayPlacement
 {
     filters: string[]
-    /** Левый верхний угол наложения в пикселях кадра. */
-    x: number
-    y: number
+    /** Выражения overlay для левого верхнего угла: считаются по времени базы. */
+    x: string
+    y: string
+}
+
+function sourceRatio(asset: Pick<MediaAsset, 'width' | 'height'>): number
+{
+    return asset.width > 0 ? asset.height / asset.width : 1
 }
 
 /** Размер наложения в пикселях кадра: ширина из доли, высота по пропорциям источника. */
@@ -106,8 +114,7 @@ export function overlaySize(
 ): { width: number; height: number }
 {
     const width = evenRound(box.width * output.width)
-    const ratio = asset.width > 0 ? asset.height / asset.width : 1
-    return { width, height: evenRound(width * ratio) }
+    return { width, height: evenRound(width * sourceRatio(asset)) }
 }
 
 /** Габарит после поворота: описанный прямоугольник. */
@@ -116,7 +123,7 @@ export function rotatedSize(
     degrees: number,
 ): { width: number; height: number }
 {
-    const a = (degrees * Math.PI) / 180
+    const a = radians(degrees)
     const cos = Math.abs(Math.cos(a))
     const sin = Math.abs(Math.sin(a))
     return {
@@ -125,27 +132,91 @@ export function rotatedSize(
     }
 }
 
-/** Цепочка наложения: масштаб, поворот с прозрачным фоном, непрозрачность, фейды, сдвиг во времени. */
+function radians(degrees: number): number
+{
+    return (degrees * Math.PI) / 180
+}
+
+/** Масштаб: неподвижный размер или выражение по времени с чётными сторонами. */
+function scaleFilter(
+    keys: readonly BoxKeyframe[],
+    asset: MediaAsset,
+    output: OutputSpec,
+    first: BoxKeyframe,
+): string
+{
+    if (!varies(keys, (k) => k.width))
+    {
+        const size = overlaySize(first, asset, output)
+        return `scale=${size.width}:${size.height}:flags=bicubic`
+    }
+    const width = piecewiseLinear(
+        keyPoints(keys, (k) => k.width),
+        't',
+    )
+    const w = `2*trunc((${width})*${output.width}/2)`
+    const h = `2*trunc((${width})*${num(output.width * sourceRatio(asset))}/2)`
+    return `scale=w='${w}':h='${h}':eval=frame:flags=bicubic`
+}
+
+/** Поворот: при анимации выходной кадр берём по диагонали, иначе углы срежет. */
+function rotateFilter(
+    keys: readonly BoxKeyframe[],
+    first: BoxKeyframe,
+): string | null
+{
+    if (varies(keys, (k) => k.rotation))
+    {
+        const angle = piecewiseLinear(
+            keyPoints(keys, (k) => radians(k.rotation)),
+            't',
+        )
+        // Запятые в значении ломают разбор, а c=none не чистит буфер: углы накапливаются кадр за кадром.
+        return `rotate=a='${angle}':c=black@0:ow='hypot(iw,ih)':oh='hypot(iw,ih)'`
+    }
+    if (Math.abs(first.rotation) <= 0.01) return null
+    const a = num(radians(first.rotation), 5)
+    return `rotate=${a}:c=black@0:ow='rotw(${a})':oh='roth(${a})'`
+}
+
+/** Прозрачность: постоянная — дешёвым фильтром, по ключам — попиксельно через geq. */
+function opacityFilter(
+    keys: readonly BoxKeyframe[],
+    first: BoxKeyframe,
+): string | null
+{
+    if (varies(keys, (k) => k.opacity))
+    {
+        const alpha = piecewiseLinear(
+            keyPoints(keys, (k) => k.opacity),
+            'T',
+        )
+        return `geq=lum='p(X,Y)':cb='p(X,Y)':cr='p(X,Y)':a='alpha(X,Y)*(${alpha})'`
+    }
+    return first.opacity < 0.999
+        ? `colorchannelmixer=aa=${num(first.opacity)}`
+        : null
+}
+
+/** Цепочка наложения: масштаб, поворот по прозрачному фону, прозрачность, фейды, сдвиг во времени. */
 export function overlayFilters(
     item: MediaItem,
     asset: MediaAsset,
     output: OutputSpec,
 ): OverlayPlacement
 {
-    const box = item.box
-    const size = overlaySize(box, asset, output)
+    const keys: BoxKeyframe[] =
+        item.boxKeys.length > 0 ? item.boxKeys : [{ t: 0, ...item.box }]
+    const first = keys[0] ?? { t: 0, ...item.box }
     const filters = [
         `fps=${output.fps}`,
-        `scale=${size.width}:${size.height}:flags=bicubic`,
+        scaleFilter(keys, asset, output, first),
         'format=yuva420p',
     ]
-    if (Math.abs(box.rotation) > 0.01)
-    {
-        const a = num((box.rotation * Math.PI) / 180, 5)
-        filters.push(`rotate=${a}:c=none:ow=rotw(${a}):oh=roth(${a})`)
-    }
-    if (box.opacity < 0.999)
-        filters.push(`colorchannelmixer=aa=${num(box.opacity)}`)
+    const rotate = rotateFilter(keys, first)
+    if (rotate) filters.push(rotate)
+    const opacity = opacityFilter(keys, first)
+    if (opacity) filters.push(opacity)
     if (item.fadeIn > 0.01)
         filters.push(`fade=t=in:st=0:d=${num(item.fadeIn, 3)}:alpha=1`)
     if (item.fadeOut > 0.01)
@@ -156,12 +227,16 @@ export function overlayFilters(
         )
     }
     filters.push(`setpts=PTS-STARTPTS+${num(item.start, 3)}/TB`)
-    const outer = rotatedSize(size, box.rotation)
-    return {
-        filters,
-        x: Math.round(box.x * output.width - outer.width / 2),
-        y: Math.round(box.y * output.height - outer.height / 2),
-    }
+    // w и h внутри overlay — размер наложения на текущем кадре, поэтому центр держится сам.
+    const x = piecewiseLinear(
+        keyPoints(keys, (k) => k.x, item.start),
+        't',
+    )
+    const y = piecewiseLinear(
+        keyPoints(keys, (k) => k.y, item.start),
+        't',
+    )
+    return { filters, x: `(${x})*W-w/2`, y: `(${y})*H-h/2` }
 }
 
 /** Звук одного элемента: громкость, фейды, сдвиг к своему месту на таймлайне. */
@@ -185,24 +260,36 @@ export function itemAudioFilters(
     return filters
 }
 
-export function colorFilters(color: ColorGrade): string[]
+const EQ_FIELDS = ['brightness', 'contrast', 'saturation', 'gamma'] as const
+
+/** Цветокор: eq умеет выражения по времени, сочность и резкость — только постоянные. */
+export function colorFilters(
+    color: ColorGrade,
+    keys: readonly ColorKeyframe[] = [],
+): string[]
 {
     const filters: string[] = []
-    const eqNeutral =
-        color.brightness === NEUTRAL_COLOR.brightness &&
-        color.contrast === NEUTRAL_COLOR.contrast &&
-        color.saturation === NEUTRAL_COLOR.saturation &&
-        color.gamma === NEUTRAL_COLOR.gamma
-    if (!eqNeutral)
+    const base = keys[0] ?? color
+    const animated =
+        keys.length > 1 && EQ_FIELDS.some((f) => varies(keys, (k) => k[f]))
+    if (animated)
+    {
+        const expr = (field: (typeof EQ_FIELDS)[number]) =>
+            `${field}='${piecewiseLinear(
+                keyPoints(keys, (k) => k[field]),
+                't',
+            )}'`
+        filters.push(`eq=${EQ_FIELDS.map(expr).join(':')}:eval=frame`)
+    }
+    else if (EQ_FIELDS.some((f) => base[f] !== NEUTRAL_COLOR[f]))
     {
         filters.push(
-            `eq=brightness=${num(color.brightness)}:contrast=${num(color.contrast)}:saturation=${num(color.saturation)}:gamma=${num(color.gamma)}`,
+            `eq=brightness=${num(base.brightness)}:contrast=${num(base.contrast)}:saturation=${num(base.saturation)}:gamma=${num(base.gamma)}`,
         )
     }
-    if (color.vibrance !== 0)
-        filters.push(`vibrance=intensity=${num(color.vibrance)}`)
-    if (color.sharpen > 0)
-        filters.push(`unsharp=5:5:${num(color.sharpen)}:5:5:0`)
+    if (base.vibrance !== 0)
+        filters.push(`vibrance=intensity=${num(base.vibrance)}`)
+    if (base.sharpen > 0) filters.push(`unsharp=5:5:${num(base.sharpen)}:5:5:0`)
     return filters
 }
 

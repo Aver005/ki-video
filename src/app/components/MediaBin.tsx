@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { api } from '@app/api'
-import { useStore } from '@app/store/store'
+import { resizeLayout, useStore, type BinView } from '@app/store/store'
 import { notify } from '@app/store/actions'
 import { AssetCard } from '@app/components/AssetCard'
 import { FileBrowser } from '@app/components/FileBrowser'
@@ -20,10 +20,17 @@ async function importPaths(paths: string[]): Promise<boolean>
     }
 }
 
+const VIEWS: { id: BinView; icon: string; label: string }[] = [
+    { id: 'list', icon: '☰', label: 'Списком' },
+    { id: 'grid', icon: '▦', label: 'Плиткой' },
+    { id: 'compact', icon: '⋮', label: 'Одной строкой' },
+]
+
 export function MediaBin()
 {
     const assets = useStore((s) => s.assets)
     const progress = useStore((s) => s.assetProgress)
+    const view = useStore((s) => s.binView)
     const [browser, setBrowser] = useState(false)
     const [path, setPath] = useState('')
     const list = Object.values(assets).sort((a, b) =>
@@ -56,6 +63,21 @@ export function MediaBin()
                     Добавить
                 </button>
             </div>
+            <div className="bin__views">
+                {VIEWS.map((v) => (
+                    <button
+                        key={v.id}
+                        className={`btn btn--small ${v.id === view ? 'btn--active' : 'btn--ghost'}`}
+                        onClick={() => resizeLayout({ binView: v.id }, true)}
+                        title={v.label}
+                        aria-label={v.label}
+                        aria-pressed={v.id === view}
+                    >
+                        {v.icon}
+                    </button>
+                ))}
+                <span className="muted">{list.length}</span>
+            </div>
             <form
                 className="bin__path"
                 onSubmit={(e) =>
@@ -71,7 +93,7 @@ export function MediaBin()
                     aria-label="Путь к файлу"
                 />
             </form>
-            <div className="bin__list">
+            <div className={`bin__list bin__list--${view}`}>
                 {list.length === 0 && (
                     <div className="muted bin__empty">
                         Добавь видео, картинки или музыку
@@ -81,6 +103,7 @@ export function MediaBin()
                     <AssetCard
                         key={asset.id}
                         asset={asset}
+                        view={view}
                         progress={progress[asset.id] ?? 0}
                     />
                 ))}

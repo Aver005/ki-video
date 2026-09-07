@@ -1,11 +1,15 @@
 // Действия над проектом: каждое изменение проходит через commit с историей и отложенным сохранением.
 
 import type {
+    BoxKeyframe,
+    ColorGrade,
+    ColorKeyframe,
     FrameKeyframe,
     FrameState,
     Item,
     MediaAsset,
     MediaItem,
+    OverlayBox,
     Project,
     SubtitleCue,
     TextItem,
@@ -15,6 +19,7 @@ import type {
 import {
     IMAGE_MAX_SECONDS,
     IMAGE_SECONDS,
+    NEUTRAL_COLOR,
     MIN_ITEM_SECONDS,
     createTrack,
     DEFAULT_BOX,
@@ -22,14 +27,13 @@ import {
     isTextItem,
     itemEnd,
 } from '@shared/model'
+import { clampFrame, defaultFrame, interpolateFrame } from '@shared/frame'
 import {
-    clampFrame,
-    defaultFrame,
-    findKeyframeAt,
-    interpolateFrame,
-    removeKeyframeAt,
-    upsertKeyframe,
-} from '@shared/frame'
+    findKeyAt,
+    interpolateKeys,
+    removeKeyAt,
+    upsertKey,
+} from '@shared/keys'
 import {
     clampContentStart,
     contentAt,
@@ -246,6 +250,7 @@ export function createMediaItem(
         offset: 0,
         frame: [],
         box: { ...DEFAULT_BOX },
+        boxKeys: [],
         volume: 1,
         fadeIn: 0,
         fadeOut: 0,
@@ -448,7 +453,7 @@ export function currentContent(): CurrentContent | null
         asset,
         localT: at.localT,
         frame: interpolateFrame(at.item.frame, at.localT, defaultFrame(asset)),
-        keyframe: findKeyframeAt(at.item.frame, at.localT),
+        keyframe: findKeyAt(at.item.frame, at.localT),
     }
 }
 
@@ -490,7 +495,7 @@ export function setFrame(patch: Partial<FrameState>, record = true): void
         found.item.frame =
             found.item.frame.length === 0
                 ? [{ t: 0, ...next }]
-                : upsertKeyframe(found.item.frame,
+                : upsertKey(found.item.frame,
                   {
                       t: current.localT,
                       ...next,
@@ -516,7 +521,7 @@ export function addKeyframe(): void
 {
     withCurrentFrame((item, localT, frame) =>
     {
-        item.frame = upsertKeyframe(item.frame, { t: localT, ...frame })
+        item.frame = upsertKey(item.frame, { t: localT, ...frame })
     })
 }
 
@@ -524,7 +529,7 @@ export function removeKeyframe(): void
 {
     withCurrentFrame((item, localT) =>
     {
-        item.frame = removeKeyframeAt(item.frame, localT)
+        item.frame = removeKeyAt(item.frame, localT)
     })
 }
 
@@ -596,6 +601,156 @@ export function deleteSelection(): void
     if (!selection) return
     if (selection.kind === 'item') removeItem(selection.id)
     if (selection.kind === 'cue') removeCue(selection.id)
+}
+
+export interface BoxAt
+{
+    /** Время внутри элемента, прижатое к его краям. */
+    localT: number
+    /** Курсор действительно стоит на элементе. */
+    inside: boolean
+    box: OverlayBox
+    keyframe: BoxKeyframe | undefined
+}
+
+/** Геометрия наложения в момент курсора: по ключам, если они есть. */
+export function boxAt(item: MediaItem): BoxAt
+{
+    const localT = getState().time - item.start
+    const clamped = Math.max(0, Math.min(localT, item.duration))
+    return {
+        localT: clamped,
+        inside: localT >= 0 && localT <= item.duration,
+        box:
+            item.boxKeys.length > 0
+                ? interpolateKeys(item.boxKeys, clamped, item.box)
+                : item.box,
+        keyframe: findKeyAt(item.boxKeys, clamped),
+    }
+}
+
+function withOverlay(
+    id: string,
+    change: (item: MediaItem, at: BoxAt) => void,
+    record = true,
+): void
+{
+    update((p) =>
+    {
+        const found = findItem(p, id)
+        if (found && isMediaItem(found.item))
+            change(found.item, boxAt(found.item))
+    }, record)
+}
+
+/** Меняет геометрию: с ключами правит или создаёт ключ под курсором, иначе неподвижное значение. */
+export function setBox(
+    id: string,
+    patch: Partial<OverlayBox>,
+    record = true,
+): void
+{
+    withOverlay(
+        id,
+        (item, at) =>
+        {
+            const next = { ...at.box, ...patch }
+            if (item.boxKeys.length === 0) item.box = next
+            else
+                item.boxKeys = upsertKey(item.boxKeys,
+                {
+                    t: at.localT,
+                    ...next,
+                })
+        },
+        record,
+    )
+}
+
+export function addBoxKey(id: string): void
+{
+    withOverlay(id, (item, at) =>
+    {
+        item.boxKeys = upsertKey(item.boxKeys, { t: at.localT, ...at.box })
+    })
+}
+
+export function removeBoxKey(id: string): void
+{
+    withOverlay(id, (item, at) =>
+    {
+        item.boxKeys = removeKeyAt(item.boxKeys, at.localT)
+    })
+}
+
+export function clearBoxKeys(id: string): void
+{
+    withOverlay(id, (item) =>
+    {
+        item.boxKeys = []
+    })
+}
+
+export interface ColorAt
+{
+    color: ColorGrade
+    keyframe: ColorKeyframe | undefined
+}
+
+/** Цветокор в момент курсора: по ключам проекта, если они есть. */
+export function colorAt(): ColorAt
+{
+    const { project, time } = getState()
+    if (!project) return { color: { ...NEUTRAL_COLOR }, keyframe: undefined }
+    return {
+        color:
+            project.colorKeys.length > 0
+                ? interpolateKeys(project.colorKeys, time, project.color)
+                : project.color,
+        keyframe: findKeyAt(project.colorKeys, time),
+    }
+}
+
+export function setColor(patch: Partial<ColorGrade>, record = true): void
+{
+    const time = getState().time
+    update((p) =>
+    {
+        const current =
+            p.colorKeys.length > 0
+                ? interpolateKeys(p.colorKeys, time, p.color)
+                : p.color
+        const next = { ...current, ...patch }
+        if (p.colorKeys.length === 0) p.color = next
+        else p.colorKeys = upsertKey(p.colorKeys, { t: time, ...next })
+    }, record)
+}
+
+export function addColorKey(): void
+{
+    const { color } = colorAt()
+    const time = getState().time
+    update((p) =>
+    {
+        p.colorKeys = upsertKey(p.colorKeys, { t: time, ...color })
+    })
+}
+
+export function removeColorKey(): void
+{
+    const time = getState().time
+    update((p) =>
+    {
+        p.colorKeys = removeKeyAt(p.colorKeys, time)
+    })
+}
+
+export function clearColorKeys(): void
+{
+    update((p) =>
+    {
+        p.colorKeys = []
+    })
 }
 
 /** Края всех соседей и курсор: к ним прилипает перетаскивание. */

@@ -3,6 +3,7 @@
 import type { MediaAsset, MediaItem, Project, Track } from '@shared/model'
 import { isMediaItem, itemEnd } from '@shared/model'
 import { defaultFrame, frameToRegion, interpolateFrame } from '@shared/frame'
+import { interpolateKeys } from '@shared/keys'
 import { contentAt, projectDuration } from '@shared/timeline'
 import { mediaUrl } from '@app/api'
 import { drawOverlays } from '@app/player/overlays'
@@ -58,12 +59,15 @@ export class Player
     attach(canvas: HTMLCanvasElement): void
     {
         this.canvas = canvas
+        this.sync()
         this.render()
     }
 
+    /** sync создаёт источники под курсором: без него на паузе рисовать нечего. */
     setSource(source: PlayerSource): void
     {
         this.source = source
+        this.sync()
         this.render()
     }
 
@@ -297,7 +301,11 @@ export class Player
         const region = frameToRegion(frame, asset, project.output)
         const proxy = asset.proxy ?? asset
         const k = proxy.width > 0 ? proxy.width / asset.width : 1
-        const { color } = project
+        const color = interpolateKeys(
+            project.colorKeys,
+            this.time,
+            project.color,
+        )
         ctx.filter = `brightness(${1 + color.brightness}) contrast(${color.contrast}) saturate(${color.saturation})`
         ctx.drawImage(
             element,
@@ -326,7 +334,15 @@ export class Player
                 `${active.asset.id}:${active.item.id}`,
             )
             if (!element || !isDrawable(element)) continue
-            const { box, duration, fadeIn, fadeOut } = active.item
+            const { duration, fadeIn, fadeOut } = active.item
+            const box =
+                active.item.boxKeys.length > 0
+                    ? interpolateKeys(
+                          active.item.boxKeys,
+                          active.localT,
+                          active.item.box,
+                      )
+                    : active.item.box
             const w = box.width * width
             const ratio =
                 active.asset.width > 0

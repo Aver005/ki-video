@@ -1,9 +1,17 @@
 import { useStore } from '@app/store/store'
-import { update } from '@app/store/actions'
+import {
+    addColorKey,
+    clearColorKeys,
+    colorAt,
+    removeColorKey,
+    seek,
+    setColor,
+} from '@app/store/actions'
 import { Slider } from '@app/components/Slider'
 import { PresetRow } from '@app/components/PresetRow'
 import { COLOR_PRESETS } from '@shared/presets'
-import type { ColorGrade } from '@shared/model'
+import { KEY_EPSILON } from '@shared/keys'
+import type { ColorGrade, ColorKeyframe } from '@shared/model'
 
 const FIELDS:
 {
@@ -25,22 +33,23 @@ function sameGrade(a: ColorGrade, b: ColorGrade): boolean
     return FIELDS.every((f) => Math.abs(a[f.key] - b[f.key]) < 0.001)
 }
 
+const NO_KEYS: readonly ColorKeyframe[] = []
+
 export function ColorTab()
 {
-    const color = useStore((s) => s.project?.color)
-    if (!color) return null
+    // Значения зависят от курсора: при ключах цвет меняется по времени.
+    const time = useStore((s) => s.time)
+    const keys = useStore((s) => s.project?.colorKeys ?? NO_KEYS)
+    const hasProject = useStore((s) => s.project !== null)
+    if (!hasProject) return null
+    const { color, keyframe } = colorAt()
     const activeId = COLOR_PRESETS.find((p) => sameGrade(p.value, color))?.id
     return (
         <div className="tab-body">
             <PresetRow
                 presets={COLOR_PRESETS}
                 activeId={activeId}
-                onPick={(preset) =>
-                    update((p) =>
-                    {
-                        p.color = { ...preset.value }
-                    })
-                }
+                onPick={(preset) => setColor(preset.value)}
             />
             {FIELDS.map((f) => (
                 <Slider
@@ -49,17 +58,44 @@ export function ColorTab()
                     value={color[f.key]}
                     min={f.min}
                     max={f.max}
-                    onChange={(v, final) =>
-                        update((p) =>
-                        {
-                            p.color[f.key] = v
-                        }, final)
-                    }
+                    onChange={(v, final) => setColor({ [f.key]: v }, final)}
                 />
             ))}
+            <div className="row-actions">
+                <button
+                    className={`btn ${keyframe ? 'btn--active' : ''}`}
+                    onClick={() =>
+                        keyframe ? removeColorKey() : addColorKey()
+                    }
+                    title="Ключ цвета на шкале проекта"
+                >
+                    ◆ {keyframe ? 'Убрать ключ' : `Ключ на ${time.toFixed(2)}s`}
+                </button>
+                <button
+                    className="btn btn--ghost"
+                    onClick={clearColorKeys}
+                    disabled={keys.length === 0}
+                >
+                    Сбросить ключи
+                </button>
+            </div>
+            {keys.length > 0 && (
+                <div className="presets">
+                    {keys.map((k) => (
+                        <button
+                            key={k.t}
+                            className={`chip ${Math.abs(k.t - time) <= KEY_EPSILON ? 'chip--active' : ''}`}
+                            onClick={() => seek(k.t)}
+                        >
+                            {k.t.toFixed(2)}s
+                        </button>
+                    ))}
+                </div>
+            )}
             <p className="muted">
                 В превью видны яркость, контраст и насыщенность. Гамма, сочность
-                и резкость — при экспорте.
+                и резкость — при экспорте. По ключам меняются яркость, контраст,
+                насыщенность и гамма; сочность и резкость остаются постоянными.
             </p>
         </div>
     )

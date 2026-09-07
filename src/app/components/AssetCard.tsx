@@ -2,11 +2,13 @@ import { thumbUrl } from '@app/api'
 import { addAssetToTimeline, removeAsset } from '@app/store/actions'
 import { ASSET_DRAG_TYPE } from '@app/components/TrackLane'
 import { formatTime } from '@shared/math'
+import type { BinView } from '@app/store/store'
 import type { MediaAsset } from '@shared/model'
 
 interface AssetCardProps
 {
     asset: MediaAsset
+    view: BinView
     progress: number
 }
 
@@ -26,12 +28,12 @@ function details(asset: MediaAsset): string
     return `${formatTime(asset.duration, false)} · ${asset.width}×${asset.height} · ${asset.videoCodec ?? '—'}`
 }
 
-export function AssetCard({ asset, progress }: AssetCardProps)
+export function AssetCard({ asset, view, progress }: AssetCardProps)
 {
     const ready = asset.status === 'ready'
     return (
         <div
-            className={`asset ${ready ? '' : 'asset--busy'}`}
+            className={`asset asset--${view} ${ready ? '' : 'asset--busy'}`}
             title={asset.path}
             draggable={ready}
             onDragStart={(e) =>

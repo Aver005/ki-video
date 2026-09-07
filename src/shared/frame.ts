@@ -1,7 +1,8 @@
 // Окно кадрирования: интерполяция ключевых кадров и пересчёт в регион исходника.
 
 import type { FrameKeyframe, FrameState } from '@shared/model'
-import { clamp, lerp } from '@shared/math'
+import { clamp } from '@shared/math'
+import { interpolateKeys } from '@shared/keys'
 
 export interface Region
 {
@@ -41,39 +42,14 @@ export function defaultFrame(source: Size): FrameState
     return { cx: source.width / 2, cy: source.height / 2, zoom: 1 }
 }
 
-/** Линейная интерполяция по отсортированным ключевым кадрам. */
+/** Окно кадра в момент t: ключи элемента или неподвижное значение. */
 export function interpolateFrame(
     keyframes: readonly FrameKeyframe[],
     t: number,
     fallback: FrameState,
 ): FrameState
 {
-    const first = keyframes[0]
-    if (!first) return fallback
-    if (t <= first.t) return pick(first)
-    const last = keyframes[keyframes.length - 1] ?? first
-    if (t >= last.t) return pick(last)
-    for (let i = 1; i < keyframes.length; i += 1)
-    {
-        const a = keyframes[i - 1]
-        const b = keyframes[i]
-        if (!a || !b) break
-        if (t <= b.t)
-        {
-            const k = b.t === a.t ? 1 : (t - a.t) / (b.t - a.t)
-            return {
-                cx: lerp(a.cx, b.cx, k),
-                cy: lerp(a.cy, b.cy, k),
-                zoom: lerp(a.zoom, b.zoom, k),
-            }
-        }
-    }
-    return pick(last)
-}
-
-function pick(k: FrameKeyframe): FrameState
-{
-    return { cx: k.cx, cy: k.cy, zoom: k.zoom }
+    return interpolateKeys(keyframes, t, fallback)
 }
 
 /** Регион исходника, попадающий в кадр: окно / zoom вокруг центра, прижатое к границам. */
@@ -108,37 +84,4 @@ export function clampFrame(
         cy: clamp(frame.cy, h / 2, source.height - h / 2),
         zoom,
     }
-}
-
-/** Полкадра при 60 fps: ключи на соседних кадрах остаются разными. */
-export const KEYFRAME_EPSILON = 0.008
-
-/** Вставляет или заменяет ключевой кадр в момент t, сохраняя сортировку. */
-export function upsertKeyframe(
-    keyframes: readonly FrameKeyframe[],
-    keyframe: FrameKeyframe,
-): FrameKeyframe[]
-{
-    const next = keyframes.filter(
-        (k) => Math.abs(k.t - keyframe.t) > KEYFRAME_EPSILON,
-    )
-    next.push(keyframe)
-    next.sort((a, b) => a.t - b.t)
-    return next
-}
-
-export function removeKeyframeAt(
-    keyframes: readonly FrameKeyframe[],
-    t: number,
-): FrameKeyframe[]
-{
-    return keyframes.filter((k) => Math.abs(k.t - t) > KEYFRAME_EPSILON)
-}
-
-export function findKeyframeAt(
-    keyframes: readonly FrameKeyframe[],
-    t: number,
-): FrameKeyframe | undefined
-{
-    return keyframes.find((k) => Math.abs(k.t - t) <= KEYFRAME_EPSILON)
 }

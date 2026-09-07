@@ -4,9 +4,9 @@ import {
     clampFrame,
     frameToRegion,
     interpolateFrame,
-    upsertKeyframe,
-    removeKeyframeAt,
 } from '@shared/frame'
+import { interpolateKeys, removeKeyAt, upsertKey } from '@shared/keys'
+import type { FrameKeyframe } from '@shared/model'
 
 const source = { width: 1728, height: 1080 }
 const output = { width: 1080, height: 1920 }
@@ -101,19 +101,43 @@ describe('clampFrame', () =>
     })
 })
 
+describe('interpolateKeys', () =>
+{
+    test('работает с любым набором числовых полей', () =>
+    {
+        const keys = [
+            { t: 0, a: 0, b: 10 },
+            { t: 2, a: 4, b: 10 },
+        ]
+        expect(interpolateKeys(keys, 1, { a: 0, b: 0 })).toEqual(
+        {
+            a: 2,
+            b: 10,
+        })
+        expect(interpolateKeys(keys, -5, { a: 0, b: 0 })).toEqual(
+        {
+            a: 0,
+            b: 10,
+        })
+        expect(interpolateKeys([], 1, { a: 7, b: 8 })).toEqual({ a: 7, b: 8 })
+    })
+})
+
 describe('keyframe list', () =>
 {
     test('upsert заменяет ключ рядом по времени и сортирует', () =>
     {
-        const list = upsertKeyframe([{ t: 2, cx: 1, cy: 1, zoom: 1 }],
-        {
-            t: 1,
-            cx: 0,
-            cy: 0,
-            zoom: 1,
-        })
+        const list: FrameKeyframe[] = upsertKey(
+            [{ t: 2, cx: 1, cy: 1, zoom: 1 }],
+            {
+                t: 1,
+                cx: 0,
+                cy: 0,
+                zoom: 1,
+            },
+        )
         expect(list.map((k) => k.t)).toEqual([1, 2])
-        const replaced = upsertKeyframe(list,
+        const replaced = upsertKey(list,
         {
             t: 2.005,
             cx: 9,
@@ -125,7 +149,7 @@ describe('keyframe list', () =>
     })
     test('ключи на соседних кадрах при 60 fps остаются разными', () =>
     {
-        const list = upsertKeyframe([{ t: 1, cx: 1, cy: 1, zoom: 1 }],
+        const list = upsertKey([{ t: 1, cx: 1, cy: 1, zoom: 1 }],
         {
             t: 1 + 1 / 60,
             cx: 0,
@@ -137,7 +161,7 @@ describe('keyframe list', () =>
     test('remove удаляет ключ в момент времени', () =>
     {
         expect(
-            removeKeyframeAt([{ t: 1, cx: 0, cy: 0, zoom: 1 }], 1.005),
+            removeKeyAt([{ t: 1, cx: 0, cy: 0, zoom: 1 }], 1.005),
         ).toHaveLength(0)
     })
 })

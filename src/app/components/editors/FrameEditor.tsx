@@ -10,7 +10,8 @@ import {
 } from '@app/store/actions'
 import { Slider } from '@app/components/Slider'
 import { TimingRow } from '@app/components/editors/TimingRow'
-import { KEYFRAME_EPSILON, MAX_ZOOM } from '@shared/frame'
+import { MAX_ZOOM } from '@shared/frame'
+import { KEY_EPSILON } from '@shared/keys'
 import { TRANSITIONS } from '@shared/presets'
 import type { MediaAsset, MediaItem, TransitionKind } from '@shared/model'
 
@@ -102,7 +103,7 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                     {item.frame.map((k) => (
                         <button
                             key={k.t}
-                            className={`chip ${Math.abs(k.t - localT) <= KEYFRAME_EPSILON ? 'chip--active' : ''}`}
+                            className={`chip ${Math.abs(k.t - localT) <= KEY_EPSILON ? 'chip--active' : ''}`}
                             onClick={() => seek(item.start + k.t)}
                         >
                             {k.t.toFixed(2)}s · {k.zoom.toFixed(1)}×

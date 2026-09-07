@@ -46,6 +46,11 @@ export function ItemBlock({
     )
     const width = Math.max(6, item.duration * pxPerSec)
     const media = isMediaItem(item) ? item : null
+    const keys = media
+        ? track.kind === 'content'
+            ? media.frame
+            : media.boxKeys
+        : []
     const caption = isTextItem(item) ? item.text : (asset?.name ?? '')
     const limit = media && asset ? maxDuration(media, asset) : Infinity
     const headroom =
@@ -113,9 +118,9 @@ export function ItemBlock({
                 />
             )}
             <span className="item__label">{caption || '…'}</span>
-            {media && track.kind === 'content' && (
+            {keys.length > 0 && (
                 <div className="item__keys">
-                    {media.frame.map((k) => (
+                    {keys.map((k) => (
                         <span
                             key={k.t}
                             className="key"

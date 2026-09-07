@@ -43,6 +43,12 @@ export interface OverlayBox
     opacity: number
 }
 
+/** Ключ геометрии наложения: время от начала элемента. */
+export interface BoxKeyframe extends OverlayBox
+{
+    t: number
+}
+
 export type TransitionKind =
     | 'fade'
     | 'dissolve'
@@ -75,6 +81,8 @@ export interface MediaItem extends ItemBase
     frame: FrameKeyframe[]
     /** Геометрия, когда элемент лежит на дорожке наложений. */
     box: OverlayBox
+    /** Ключи геометрии; пустой список — неподвижное наложение. */
+    boxKeys: BoxKeyframe[]
     /** Громкость 0..2. */
     volume: number
     fadeIn: number
@@ -126,6 +134,12 @@ export interface ColorGrade
     sharpen: number
 }
 
+/** Ключ цветокора: время от начала проекта. */
+export interface ColorKeyframe extends ColorGrade
+{
+    t: number
+}
+
 export interface AudioChain
 {
     /** 0..1, 0 — выключено */
@@ -162,6 +176,8 @@ export interface Project
     output: OutputSpec
     tracks: Track[]
     color: ColorGrade
+    /** Ключи цвета по шкале проекта; пустой список — неподвижный цветокор. */
+    colorKeys: ColorKeyframe[]
     audio: AudioChain
     subtitles: Subtitles
 }
@@ -275,6 +291,7 @@ export function createProject(id: Id, name = 'Без названия'): Project
             createTrack('audio', 'Звук'),
         ],
         color: { ...NEUTRAL_COLOR },
+        colorKeys: [],
         audio: { ...SILENT_AUDIO },
         subtitles: { preset: 'bold', y: 0.8, cues: [] },
     }

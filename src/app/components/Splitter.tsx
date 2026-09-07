@@ -1,15 +1,28 @@
+/** С какой стороны панели стоит ручка: от этого зависит, куда панель растёт. */
+export type SplitterSide = 'left' | 'right' | 'top'
+
 interface SplitterProps
 {
-    axis: 'x' | 'y'
+    side: SplitterSide
     value: number
     min: number
     max: number
     onChange: (value: number, final: boolean) => void
 }
 
-/** Граница панели: тянется мышью. Панель растёт влево или вверх, поэтому смещение со знаком минус. */
-export function Splitter({ axis, value, min, max, onChange }: SplitterProps)
+const AXIS: Record<SplitterSide, 'x' | 'y'> =
 {
+    left: 'x',
+    right: 'x',
+    top: 'y',
+}
+
+/** Ручка слева и сверху: панель растёт против движения курсора, справа — по движению. */
+const SIGN: Record<SplitterSide, 1 | -1> = { left: -1, right: 1, top: -1 }
+
+export function Splitter({ side, value, min, max, onChange }: SplitterProps)
+{
+    const axis = AXIS[side]
     const down = (event: React.PointerEvent) =>
     {
         event.preventDefault()
@@ -17,7 +30,10 @@ export function Splitter({ axis, value, min, max, onChange }: SplitterProps)
         const apply = (ev: PointerEvent, final: boolean) =>
         {
             const now = axis === 'x' ? ev.clientX : ev.clientY
-            const next = Math.min(max, Math.max(min, value - (now - origin)))
+            const next = Math.min(
+                max,
+                Math.max(min, value + SIGN[side] * (now - origin)),
+            )
             onChange(Math.round(next), final)
         }
         const move = (ev: PointerEvent) => apply(ev, false)
@@ -32,7 +48,7 @@ export function Splitter({ axis, value, min, max, onChange }: SplitterProps)
     }
     return (
         <div
-            className={`splitter splitter--${axis}`}
+            className={`splitter splitter--${side}`}
             onPointerDown={down}
             role="separator"
             aria-orientation={axis === 'x' ? 'vertical' : 'horizontal'}
