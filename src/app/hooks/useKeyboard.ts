@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { addKeyframe, deleteSelection, redo, undo } from '@entities/project'
 import { splitAtPlayhead } from '@features/split-item'
 import { getPlayer, seek } from '@entities/player'
+import { projectDuration } from '@core/timeline'
 import { getState } from '@shared/model/store'
 
 const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
@@ -43,6 +44,11 @@ const HANDLERS: Record<string, Handler> =
         return true
     },
     Home: withoutModifiers(() => seek(0)),
+    End: withoutModifiers(() =>
+    {
+        const project = getState().project
+        if (project) seek(projectDuration(project))
+    }),
     Delete: withoutModifiers(deleteSelection),
     Backspace: withoutModifiers(deleteSelection),
     KeyS: withoutModifiers(splitAtPlayhead),
