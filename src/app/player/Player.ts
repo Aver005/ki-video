@@ -118,7 +118,7 @@ export class Player
     destroy(): void
     {
         this.pause()
-        for (const id of [...this.videos.keys()]) this.release(id)
+        for (const id of this.videos.keys()) this.release(id)
     }
 
     private emit(): void

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { getState, useStore } from '@app/store/store'
 import { setCues, update } from '@app/store/actions'
 import { Slider } from '@app/components/Slider'
@@ -11,10 +11,16 @@ const PRESET_IDS = Object.keys(SUBTITLE_STYLES) as SubtitlePreset[]
 export function SubtitlesTab()
 {
     const subtitles = useStore((s) => s.project?.subtitles)
-    const [draft, setDraft] = useState('')
     const cuesKey = subtitles ? printSimple(subtitles.cues) : ''
+    const [draft, setDraft] = useState(cuesKey)
+    const [syncedKey, setSyncedKey] = useState(cuesKey)
 
-    useEffect(() => setDraft(cuesKey), [cuesKey])
+    // Реплики, изменённые извне, перебивают черновик в поле ввода.
+    if (cuesKey !== syncedKey)
+    {
+        setSyncedKey(cuesKey)
+        setDraft(cuesKey)
+    }
     if (!subtitles) return null
 
     const addAtPlayhead = () =>
