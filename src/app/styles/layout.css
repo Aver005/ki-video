@@ -116,10 +116,6 @@
     width: 18px;
     height: 18px;
 }
-.asset__kind .lucide {
-    width: 22px;
-    height: 22px;
-}
 
 .chip {
     background: var(--ki-bg-3);
@@ -140,22 +136,6 @@
 }
 
 /* Медиатека */
-.bin {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-.bin__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px 6px;
-}
-.bin__path {
-    padding: 0 12px 8px;
-}
-.bin__path input,
-.modal__path,
 .field input,
 .field select,
 textarea {
@@ -165,135 +145,11 @@ textarea {
     border-radius: var(--ki-radius);
     padding: 5px 8px;
 }
-.bin__views {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0 12px 8px;
-}
-.bin__views .muted {
-    margin-left: auto;
-    font-family: var(--ki-mono);
-}
-.bin__list {
-    overflow-y: auto;
-    padding: 0 8px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.bin__list--grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    align-content: start;
-    gap: 8px;
-}
-.bin__empty {
-    padding: 24px 8px;
-    text-align: center;
-}
 .section-title {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--ki-muted);
-}
-
-.asset {
-    display: grid;
-    grid-template-columns: 64px 1fr auto;
-    gap: 8px;
-    padding: 6px;
-    border: 1px solid var(--ki-line);
-    border-radius: var(--ki-radius);
-    background: var(--ki-bg-3);
-    align-items: center;
-    overflow: hidden;
-}
-.asset--busy {
-    opacity: 0.8;
-}
-.asset--compact {
-    grid-template-columns: 28px 1fr auto;
-    padding: 3px 6px;
-}
-.asset--compact .asset__thumb {
-    width: 28px;
-    height: 18px;
-}
-.asset--compact .asset__body .muted {
-    display: none;
-}
-.asset--compact .asset__actions {
-    flex-direction: row;
-}
-.asset--grid {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.asset--grid .asset__thumb {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-}
-.asset--grid .asset__actions {
-    flex-direction: row;
-    justify-content: flex-end;
-}
-.asset--grid .muted {
-    font-size: 11px;
-}
-.asset__thumb {
-    width: 64px;
-    height: 40px;
-    background: #000;
-    border-radius: 4px;
-    overflow: hidden;
-}
-.asset__kind {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--ki-muted);
-    font-size: 18px;
-}
-.asset__thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-.asset__body {
-    min-width: 0;
-}
-.asset__name,
-.asset__meta {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.asset__actions {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.progress {
-    height: 4px;
-    background: var(--ki-line);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-top: 4px;
-}
-.progress__bar {
-    height: 100%;
-    background: var(--ki-accent);
-    transition: width 0.2s ease;
-}
-.progress__bar--error {
-    background: var(--ki-danger);
 }
 
 /* Превью */
@@ -414,30 +270,6 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 2px;
-}
-.row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    width: 100%;
-    text-align: left;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--ki-radius);
-    padding: 5px 8px;
-    cursor: pointer;
-}
-.row:hover {
-    background: var(--ki-bg-3);
-}
-.row--active {
-    border-color: var(--ki-accent);
-}
-.row__name {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 .export-status {
     display: flex;
@@ -633,38 +465,3 @@ textarea {
 /* Границы панелей */
 
 /* Модалка */
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-}
-.modal__card {
-    width: 560px;
-    max-height: 80vh;
-    background: var(--ki-bg-2);
-    border: 1px solid var(--ki-line);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    animation: rise 0.16s ease-out;
-}
-.modal__head,
-.modal__foot {
-    display: flex;
-    gap: 8px;
-    padding: 10px;
-    align-items: center;
-}
-.modal__foot {
-    justify-content: flex-end;
-    border-top: 1px solid var(--ki-line);
-}
-.modal__list {
-    overflow-y: auto;
-    padding: 0 6px;
-    flex: 1;
-}

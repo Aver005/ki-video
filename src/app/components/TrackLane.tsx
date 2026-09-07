@@ -1,3 +1,4 @@
+import { ASSET_DRAG_TYPE } from '@entities/asset'
 import { Eye, EyeOff, Volume2, VolumeX, X } from 'lucide-react'
 import { getState, useStore } from '@shared/model/store'
 import { addAssetToTimeline, removeTrack, updateTrack } from '@entities/project'
@@ -14,8 +15,6 @@ interface TrackLaneProps
     height: number
     trackAt: (event: PointerEvent) => string | undefined
 }
-
-export const ASSET_DRAG_TYPE = 'text/ki-asset'
 
 export function TrackLane({
     track,

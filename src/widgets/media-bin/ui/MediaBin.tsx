@@ -1,10 +1,17 @@
+// Медиатека: список файлов, три вида отображения и добавление с диска.
+
 import { useState } from 'react'
 import { LayoutGrid, List, Plus, Rows3, type LucideIcon } from 'lucide-react'
+import { TextField } from 'react-aria-components'
 import { api } from '@shared/api/client'
-import { resizeLayout, useStore, type BinView } from '@shared/model/store'
 import { notify } from '@shared/model/editor'
-import { AssetCard } from '@app/components/AssetCard'
-import { FileBrowser } from '@app/components/FileBrowser'
+import { resizeLayout, useStore, type BinView } from '@shared/model/store'
+import { Button } from '@shared/ui/button'
+import { Input } from '@shared/ui/input'
+import { SectionTitle } from '@shared/ui/kit/SectionTitle'
+import { Toggle } from '@shared/ui/toggle'
+import { AssetCard } from '@widgets/media-bin/ui/AssetCard'
+import { FileBrowser } from '@widgets/media-bin/ui/FileBrowser'
 
 async function importPaths(paths: string[]): Promise<boolean>
 {
@@ -57,47 +64,53 @@ export function MediaBin()
     }
 
     return (
-        <div className="bin">
-            <div className="bin__head">
-                <span className="section-title">Файлы</span>
-                <button className="btn" onClick={() => void pickFiles()}>
+        <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
+                <SectionTitle>Файлы</SectionTitle>
+                <Button variant="outline" onPress={() => void pickFiles()}>
                     <Plus />
                     Добавить
-                </button>
+                </Button>
             </div>
-            <div className="bin__views">
+            <div className="flex items-center gap-1 px-3 pb-2">
                 {VIEWS.map((v) => (
-                    <button
+                    <Toggle
                         key={v.id}
-                        className={`btn btn--small ${v.id === view ? 'btn--active' : 'btn--ghost'}`}
-                        onClick={() => resizeLayout({ binView: v.id }, true)}
-                        title={v.label}
+                        size="sm"
+                        isSelected={v.id === view}
+                        onChange={() => resizeLayout({ binView: v.id }, true)}
                         aria-label={v.label}
-                        aria-pressed={v.id === view}
                     >
                         <v.icon />
-                    </button>
+                    </Toggle>
                 ))}
-                <span className="muted">{list.length}</span>
+                <span className="ml-auto font-mono text-muted-foreground">
+                    {list.length}
+                </span>
             </div>
-            <form
-                className="bin__path"
-                onSubmit={(e) =>
+            <TextField
+                aria-label="Путь к файлу"
+                className="px-3 pb-2"
+                value={path}
+                onChange={setPath}
+                onKeyDown={(e) =>
                 {
+                    if (e.key !== 'Enter') return
                     e.preventDefault()
                     void submitPath()
                 }}
             >
-                <input
-                    value={path}
-                    onChange={(e) => setPath(e.target.value)}
-                    placeholder="или путь к файлу…"
-                    aria-label="Путь к файлу"
-                />
-            </form>
-            <div className={`bin__list bin__list--${view}`}>
+                <Input placeholder="или путь к файлу…" />
+            </TextField>
+            <div
+                className={
+                    view === 'grid'
+                        ? 'grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] content-start gap-2 overflow-y-auto px-2 pb-2'
+                        : 'flex flex-col gap-1.5 overflow-y-auto px-2 pb-2'
+                }
+            >
                 {list.length === 0 && (
-                    <div className="muted bin__empty">
+                    <div className="px-2 py-6 text-center text-muted-foreground">
                         Добавь видео, картинки или музыку
                     </div>
                 )}

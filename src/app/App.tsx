@@ -1,7 +1,7 @@
 import { useBootstrap } from '@app/hooks/useBootstrap'
 import { useKeyboard } from '@app/hooks/useKeyboard'
 import { usePlayerBinding } from '@entities/player'
-import { MediaBin } from '@app/components/MediaBin'
+import { MediaBin } from '@widgets/media-bin'
 import { Preview } from '@app/components/Preview'
 import { Inspector } from '@app/components/Inspector'
 import { Timeline } from '@app/components/Timeline'
