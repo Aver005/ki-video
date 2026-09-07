@@ -15,9 +15,9 @@ src/server  ← Bun: процессы ffmpeg, файлы, HTTP/WS. Зависи�
 ### Feature-Sliced Design в интерфейсе
 
 ```
-src/app       ← точка входа, App.tsx, стили, ещё не перенесённые компоненты
-src/pages     ← пока пусто
-src/widgets   ← app-header, transport
+src/app       ← точка входа, App.tsx, globals.css, ws.ts и два хука инициализации (5 файлов)
+src/pages     ← пусто: экран один, страница не нужна
+src/widgets   ← app-header, transport, media-bin, preview, timeline, inspector, notice
 src/features  ← split-item
 src/entities  ← project (документ целиком), player, asset
 src/shared    ← ui (shadcn) и ui/kit (свои составные), api/client.ts, model/{store,editor}.ts
@@ -85,9 +85,13 @@ src/shared    ← ui (shadcn) и ui/kit (свои составные), api/clien
 Стили собирает Tailwind v4 через `bun-plugin-tailwind` — он подключён и к dev-серверу
 (`bunfig.toml`), и к сборке exe (`scripts/build.ts`).
 
-Единственный вход стилей — `src/app/styles/globals.css`. Старые `theme.css`, `layout.css`,
-`animations.css` втянуты в него через `layer(base)` и `layer(components)`: они лежат ниже утилит
-Tailwind и по мере переноса компонентов вычищаются.
+Единственный файл стилей — `src/app/styles/globals.css`: токены темы, базовые правила для
+`html/body`, размер иконок Lucide и отключение анимаций по `prefers-reduced-motion`. Старых
+`theme.css`, `layout.css`, `animations.css` больше нет, весь вид задаётся классами в разметке.
+
+`shared/ui` — файлы из реестра shadcn, `shared/ui/kit` — своё поверх них: `SliderField`,
+`NumberField`, `Field`, `CheckboxField`, `PresetRow`, `SectionTitle`, `Splitter`. Варианты
+раскладки (карточка файла, элемент дорожки) описаны через `cva`, а не через классы-модификаторы.
 
 ## Текст и субтитры
 
