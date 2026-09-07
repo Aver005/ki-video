@@ -29,7 +29,7 @@ const GEOMETRY:
 }[] = [
     { key: 'x', label: 'Центр X', min: 0, max: 1 },
     { key: 'y', label: 'Центр Y', min: 0, max: 1 },
-    { key: 'width', label: 'Ширина', min: 0.02, max: 2 },
+    { key: 'width', label: 'Ширина', min: 0.005, max: 2 },
     { key: 'rotation', label: 'Поворот', min: -180, max: 180 },
     { key: 'opacity', label: 'Непрозрачность', min: 0, max: 1 },
 ]
@@ -52,7 +52,13 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
                             value={at.box[field.key]}
                             min={field.min}
                             max={field.max}
-                            step={field.key === 'rotation' ? 1 : 0.01}
+                            step={
+                                field.key === 'width'
+                                    ? 0.005
+                                    : field.key === 'rotation'
+                                      ? 1
+                                      : 0.01
+                            }
                             onChange={(v, final) =>
                                 setBox(item.id, { [field.key]: v }, final)
                             }

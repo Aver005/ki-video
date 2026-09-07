@@ -94,10 +94,28 @@ describe('frameToRegion', () =>
 
 describe('clampFrame', () =>
 {
-    test('зум ограничен диапазоном и центр не выходит за исходник', () =>
+    test('центр не выходит за исходник', () =>
     {
-        const f = clampFrame({ cx: -50, cy: 5000, zoom: 0.2 }, source, output)
+        const f = clampFrame({ cx: -50, cy: 5000, zoom: 1 }, source, output)
         expect(f).toEqual({ cx: 303, cy: 540, zoom: 1 })
+    })
+    test('зум ограничен диапазоном', () =>
+    {
+        expect(
+            clampFrame({ cx: 864, cy: 540, zoom: 99 }, source, output).zoom,
+        ).toBe(8)
+        expect(
+            clampFrame({ cx: 864, cy: 540, zoom: 0.01 }, source, output).zoom,
+        ).toBe(0.2)
+    })
+    test('при отдалении окно шире исходника и встаёт по центру', () =>
+    {
+        const f = clampFrame({ cx: 100, cy: 100, zoom: 0.2 }, source, output)
+        expect(f).toEqual({ cx: 864, cy: 540, zoom: 0.2 })
+        const r = frameToRegion(f, source, output)
+        expect(r.w).toBe(3030)
+        expect(r.x).toBe((1728 - 3030) / 2)
+        expect(r.y).toBe((1080 - 5400) / 2)
     })
 })
 

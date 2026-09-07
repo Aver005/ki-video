@@ -10,7 +10,7 @@ import {
 } from '@app/store/actions'
 import { Slider } from '@app/components/Slider'
 import { TimingRow } from '@app/components/editors/TimingRow'
-import { MAX_ZOOM } from '@shared/frame'
+import { MAX_ZOOM, MIN_ZOOM } from '@shared/frame'
 import { KEY_EPSILON } from '@shared/keys'
 import { TRANSITIONS } from '@shared/presets'
 import type { MediaAsset, MediaItem, TransitionKind } from '@shared/model'
@@ -71,7 +71,7 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
             <Slider
                 label="Зум"
                 value={frame.zoom}
-                min={1}
+                min={MIN_ZOOM}
                 max={MAX_ZOOM}
                 step={0.01}
                 format={(v) => `${v.toFixed(2)}×`}

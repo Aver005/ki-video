@@ -16,6 +16,7 @@ import type {
     TrackKind,
     TransitionKind,
 } from '@shared/model'
+import { MIN_ZOOM } from '@shared/frame'
 import {
     createProject,
     createTrack,
@@ -128,7 +129,7 @@ function normalizeBox(value: unknown): OverlayBox
     return {
         x: asNumber(raw['x'], DEFAULT_BOX.x),
         y: asNumber(raw['y'], DEFAULT_BOX.y),
-        width: Math.max(0.01, asNumber(raw['width'], DEFAULT_BOX.width)),
+        width: Math.max(0.002, asNumber(raw['width'], DEFAULT_BOX.width)),
         rotation: asNumber(raw['rotation'], DEFAULT_BOX.rotation),
         opacity: Math.min(1, asNumber(raw['opacity'], DEFAULT_BOX.opacity, 0)),
     }
@@ -159,7 +160,7 @@ function normalizeFrame(value: unknown): MediaItem['frame']
             t: asNumber(raw['t'], 0, 0),
             cx: asNumber(raw['cx'], 0),
             cy: asNumber(raw['cy'], 0),
-            zoom: asNumber(raw['zoom'], 1, 1),
+            zoom: asNumber(raw['zoom'], 1, MIN_ZOOM),
         }))
         .sort((a, b) => a.t - b.t)
 }

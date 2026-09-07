@@ -20,9 +20,25 @@ export interface Size
 
 export const MAX_ZOOM = 8
 
-function evenFloor(value: number): number
+/** Дальше не отдаляем: окно кадрирования растёт как 1/zoom, а вместе с ним и холст под ffmpeg. */
+export const MIN_ZOOM = 0.2
+
+export function evenFloor(value: number): number
 {
     return Math.floor(value / 2) * 2
+}
+
+export function evenCeil(value: number): number
+{
+    return Math.ceil(value / 2) * 2
+}
+
+/** Положение окна по одной оси: внутри исходника прижимаем к краю, шире исходника — центрируем. */
+function place(center: number, window: number, source: number): number
+{
+    return window >= source
+        ? (source - window) / 2
+        : clamp(center - window / 2, 0, source - window)
 }
 
 /** Базовое окно: максимум по высоте исходника с пропорциями выхода. Размеры чётные, как требует кодек. */
@@ -52,7 +68,7 @@ export function interpolateFrame(
     return interpolateKeys(keyframes, t, fallback)
 }
 
-/** Регион исходника, попадающий в кадр: окно / zoom вокруг центра, прижатое к границам. */
+/** Регион исходника, попадающий в кадр: окно / zoom вокруг центра. При отдалении вылезает за края. */
 export function frameToRegion(
     frame: FrameState,
     source: Size,
@@ -60,15 +76,18 @@ export function frameToRegion(
 ): Region
 {
     const base = baseWindow(source, output)
-    const zoom = clamp(frame.zoom, 1, MAX_ZOOM)
+    const zoom = clamp(frame.zoom, MIN_ZOOM, MAX_ZOOM)
     const w = base.width / zoom
     const h = base.height / zoom
-    const x = clamp(frame.cx - w / 2, 0, source.width - w)
-    const y = clamp(frame.cy - h / 2, 0, source.height - h)
-    return { x, y, w, h }
+    return {
+        x: place(frame.cx, w, source.width),
+        y: place(frame.cy, h, source.height),
+        w,
+        h,
+    }
 }
 
-/** Прижимает центр и зум, чтобы окно не выходило за исходник. */
+/** Прижимает центр и зум: окно не выходит за исходник, а при отдалении встаёт по центру. */
 export function clampFrame(
     frame: FrameState,
     source: Size,
@@ -76,12 +95,12 @@ export function clampFrame(
 ): FrameState
 {
     const base = baseWindow(source, output)
-    const zoom = clamp(frame.zoom, 1, MAX_ZOOM)
+    const zoom = clamp(frame.zoom, MIN_ZOOM, MAX_ZOOM)
     const w = base.width / zoom
     const h = base.height / zoom
     return {
-        cx: clamp(frame.cx, w / 2, source.width - w / 2),
-        cy: clamp(frame.cy, h / 2, source.height - h / 2),
+        cx: place(frame.cx, w, source.width) + w / 2,
+        cy: place(frame.cy, h, source.height) + h / 2,
         zoom,
     }
 }

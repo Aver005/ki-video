@@ -234,6 +234,7 @@ textarea {
     border-radius: var(--radius);
     background: var(--bg-3);
     align-items: center;
+    overflow: hidden;
 }
 .asset--busy {
     opacity: 0.8;
@@ -293,7 +294,8 @@ textarea {
 .asset__body {
     min-width: 0;
 }
-.asset__name {
+.asset__name,
+.asset__meta {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

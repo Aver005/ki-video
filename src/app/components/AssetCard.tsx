@@ -19,13 +19,20 @@ const KIND_LABEL: Record<MediaAsset['kind'], string> =
     audio: 'звук',
 }
 
-function details(asset: MediaAsset): string
+/** В узких видах строка короче: кодек не влезает и всё равно виден в подсказке. */
+function details(asset: MediaAsset, view: BinView): string
 {
-    if (asset.kind === 'image')
-        return `картинка · ${asset.width}×${asset.height}`
+    const size = `${asset.width}×${asset.height}`
+    const time = formatTime(asset.duration, false)
+    const short = view !== 'list'
+    if (asset.kind === 'image') return short ? size : `картинка · ${size}`
     if (asset.kind === 'audio')
-        return `звук · ${formatTime(asset.duration, false)} · ${asset.audioCodec ?? '—'}`
-    return `${formatTime(asset.duration, false)} · ${asset.width}×${asset.height} · ${asset.videoCodec ?? '—'}`
+        return short
+            ? `звук · ${time}`
+            : `звук · ${time} · ${asset.audioCodec ?? '—'}`
+    return short
+        ? `${time} · ${size}`
+        : `${time} · ${size} · ${asset.videoCodec ?? '—'}`
 }
 
 export function AssetCard({ asset, view, progress }: AssetCardProps)
@@ -52,7 +59,7 @@ export function AssetCard({ asset, view, progress }: AssetCardProps)
             </div>
             <div className="asset__body">
                 <div className="asset__name">{asset.name}</div>
-                <div className="muted">{details(asset)}</div>
+                <div className="asset__meta muted">{details(asset, view)}</div>
                 {asset.status === 'processing' && (
                     <div className="progress">
                         <div

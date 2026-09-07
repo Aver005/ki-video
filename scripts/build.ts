@@ -42,6 +42,20 @@ if (!result.success)
 
 const size = Bun.file(outfile).size
 console.log(`собрано: ${outfile} (${(size / 1024 / 1024).toFixed(1)} МБ)`)
+
+/** Конфиг кладём рядом с exe: сервер читает его из папки запуска. */
+async function copyIfExists(name: string): Promise<boolean>
+{
+    const file = Bun.file(name)
+    if (!(await file.exists())) return false
+    await Bun.write(`${outdir}/${name}`, file)
+    return true
+}
+
+const copied = await copyIfExists('ki.config.json')
+await copyIfExists('ki.config.example.json')
 console.log(
-    'рядом с exe положи ki.config.json (см. ki.config.example.json) или задай KI_FFMPEG_DIR',
+    copied
+        ? `конфиг скопирован: ${outdir}/ki.config.json`
+        : 'конфига рядом нет: положи ki.config.json (см. ki.config.example.json) или задай KI_FFMPEG_DIR',
 )

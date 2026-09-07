@@ -182,6 +182,29 @@ describe('filters', () =>
         )
         expect(f[3]).toContain('d=1:s=1080x1920:fps=60')
     })
+    test('отдаление: исходник ложится на чёрный холст, окно шире исходника', () =>
+    {
+        const f = frameFilters(
+            item(
+            {
+                frame: [
+                    { t: 0, cx: 864, cy: 540, zoom: 0.5 },
+                    { t: 2, cx: 864, cy: 540, zoom: 1 },
+                ],
+            }),
+            asset,
+            output,
+        )
+        expect(f[1]).toBe('pad=1728:2160:0:540:black')
+        expect(f[2]).toStartWith('crop=1212:2160:')
+        // zoompan приближает от дальнего плана: 0.5 становится единицей, 1 — двойкой.
+        expect(f[4]).toContain("z='clip(if(lt(it,2),1+(2-1)*(it-0)/2,2),1,16)'")
+    })
+    test('без отдаления холста нет: цепочка как была', () =>
+    {
+        const f = frameFilters(item(), asset, output)
+        expect(f.some((s) => s.startsWith('pad='))).toBe(false)
+    })
     test('наложение: масштаб по доле кадра, поворот с прозрачным фоном, сдвиг во времени', () =>
     {
         const placement = overlayFilters(

@@ -12,9 +12,16 @@ import type {
     OverlayBox,
 } from '@shared/model'
 import { NEUTRAL_COLOR } from '@shared/model'
-import { baseWindow, defaultFrame, MAX_ZOOM } from '@shared/frame'
+import {
+    baseWindow,
+    defaultFrame,
+    evenCeil,
+    evenFloor,
+    MAX_ZOOM,
+    MIN_ZOOM,
+} from '@shared/frame'
 import { keyPoints, varies } from '@shared/keys'
-import { num } from '@shared/math'
+import { clamp, num } from '@shared/math'
 import { clipExpr, piecewiseLinear, type TimePoint } from '@shared/ffmpeg/expr'
 
 function points(
@@ -25,7 +32,7 @@ function points(
     return keyframes.map((k) => ({ t: k.t, v: pickValue(k) }))
 }
 
-/** Цепочка кадрирования: crop с панорамой по t → scale → zoompan для зума. */
+/** Цепочка кадрирования: холст под отдаление → crop с панорамой по t → scale → zoompan для зума. */
 export function frameFilters(
     item: MediaItem,
     asset: MediaAsset,
@@ -33,50 +40,101 @@ export function frameFilters(
 ): string[]
 {
     const source = { width: asset.width, height: asset.height }
-    const { width: bw, height: bh } = baseWindow(source, output)
+    const base = baseWindow(source, output)
     const keyframes =
         item.frame.length > 0 ? item.frame : [{ t: 0, ...defaultFrame(source) }]
+    const zooms = keyframes.map((k) => clamp(k.zoom, MIN_ZOOM, MAX_ZOOM))
 
+    // Режем по самому дальнему плану: дальше zoompan только приближает.
+    const far = Math.min(1, ...zooms)
+    const window =
+    {
+        width: evenFloor(base.width / far),
+        height: evenFloor(base.height / far),
+    }
+    const wide = window.width > source.width || window.height > source.height
+    const canvas = wide
+        ?
+          {
+              width: evenCeil(Math.max(source.width, window.width)),
+              height: evenCeil(Math.max(source.height, window.height)),
+          }
+        : source
+    const offset =
+    {
+        x: evenFloor((canvas.width - source.width) / 2),
+        y: evenFloor((canvas.height - source.height) / 2),
+    }
+
+    const filters = [`fps=${output.fps}`]
+    // При отдалении окно шире исходника, поэтому исходник кладём на чёрный холст.
+    if (wide)
+    {
+        filters.push(
+            `pad=${canvas.width}:${canvas.height}:${offset.x}:${offset.y}:black`,
+        )
+    }
+
+    const shifted = (k: FrameKeyframe, axis: 'cx' | 'cy') =>
+        k[axis] + (axis === 'cx' ? offset.x : offset.y)
     const cx = piecewiseLinear(
-        points(keyframes, (k) => k.cx),
+        points(keyframes, (k) => shifted(k, 'cx')),
         't',
     )
     const cy = piecewiseLinear(
-        points(keyframes, (k) => k.cy),
+        points(keyframes, (k) => shifted(k, 'cy')),
         't',
     )
-    const x = clipExpr(`${cx}-${num(bw / 2)}`, 0, asset.width - bw)
-    const y = clipExpr(`${cy}-${num(bh / 2)}`, 0, asset.height - bh)
+    const x = clipExpr(
+        `${cx}-${num(window.width / 2)}`,
+        0,
+        canvas.width - window.width,
+    )
+    const y = clipExpr(
+        `${cy}-${num(window.height / 2)}`,
+        0,
+        canvas.height - window.height,
+    )
     // exact=1: без округления x/y к чётным пикселям панорама идёт плавно.
-    const filters = [
-        `fps=${output.fps}`,
-        `crop=${bw}:${bh}:'${x}':'${y}':exact=1`,
+    filters.push(
+        `crop=${window.width}:${window.height}:'${x}':'${y}':exact=1`,
         `scale=${output.width}:${output.height}:flags=bicubic`,
-    ]
+    )
 
-    const hasZoom = keyframes.some((k) => k.zoom > 1.0001)
+    const hasZoom = zooms.some((z) => z > far * 1.0001)
     if (hasZoom)
     {
         const zoom = clipExpr(
             piecewiseLinear(
-                points(keyframes, (k) => Math.min(MAX_ZOOM, k.zoom)),
+                points(
+                    keyframes,
+                    (k) => clamp(k.zoom, MIN_ZOOM, MAX_ZOOM) / far,
+                ),
                 'it',
             ),
             1,
-            MAX_ZOOM,
+            MAX_ZOOM / far,
         )
-        const sx = output.width / bw
-        const sy = output.height / bh
+        const sx = output.width / window.width
+        const sy = output.height / window.height
         const cxIt = piecewiseLinear(
-            points(keyframes, (k) => k.cx),
+            points(keyframes, (k) => shifted(k, 'cx')),
             'it',
         )
         const cyIt = piecewiseLinear(
-            points(keyframes, (k) => k.cy),
+            points(keyframes, (k) => shifted(k, 'cy')),
             'it',
         )
-        const baseX = clipExpr(`${cxIt}-${num(bw / 2)}`, 0, asset.width - bw)
-        const baseY = clipExpr(`${cyIt}-${num(bh / 2)}`, 0, asset.height - bh)
+        const baseX = clipExpr(
+            `${cxIt}-${num(window.width / 2)}`,
+            0,
+            canvas.width - window.width,
+        )
+        const baseY = clipExpr(
+            `${cyIt}-${num(window.height / 2)}`,
+            0,
+            canvas.height - window.height,
+        )
         const centerX = `(${cxIt}-${baseX})*${num(sx)}`
         const centerY = `(${cyIt}-${baseY})*${num(sy)}`
         const zx = `clip(${centerX}-iw/zoom/2,0,iw-iw/zoom)`
@@ -154,8 +212,9 @@ function scaleFilter(
         keyPoints(keys, (k) => k.width),
         't',
     )
-    const w = `2*trunc((${width})*${output.width}/2)`
-    const h = `2*trunc((${width})*${num(output.width * sourceRatio(asset))}/2)`
+    // Ниже двух пикселей scale не принимает размер, поэтому пол при крошечной ширине.
+    const w = `max(2,2*trunc((${width})*${output.width}/2))`
+    const h = `max(2,2*trunc((${width})*${num(output.width * sourceRatio(asset))}/2))`
     return `scale=w='${w}':h='${h}':eval=frame:flags=bicubic`
 }
 
