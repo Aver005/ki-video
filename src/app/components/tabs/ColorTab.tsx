@@ -9,7 +9,7 @@ import {
     setColor,
 } from '@entities/project'
 import { SliderField } from '@shared/ui/kit/SliderField'
-import { PresetRow } from '@app/components/PresetRow'
+import { PresetRow } from '@shared/ui/kit/PresetRow'
 import { COLOR_PRESETS } from '@core/presets'
 import { NEUTRAL_COLOR } from '@core/model'
 import { KEY_EPSILON } from '@core/keys'

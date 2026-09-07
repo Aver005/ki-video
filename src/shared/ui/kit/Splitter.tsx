@@ -1,7 +1,10 @@
-/** С какой стороны панели стоит ручка: от этого зависит, куда панель растёт. */
+// Ручка для растягивания панели. Слева и сверху панель растёт против движения курсора.
+
+import type { PointerEvent as ReactPointerEvent } from 'react'
+
 export type SplitterSide = 'left' | 'right' | 'top'
 
-interface SplitterProps
+export interface SplitterProps
 {
     side: SplitterSide
     value: number
@@ -16,14 +19,18 @@ const AXIS: Record<SplitterSide, 'x' | 'y'> =
     right: 'x',
     top: 'y',
 }
-
-/** Ручка слева и сверху: панель растёт против движения курсора, справа — по движению. */
 const SIGN: Record<SplitterSide, 1 | -1> = { left: -1, right: 1, top: -1 }
+const BOX: Record<SplitterSide, string> =
+{
+    left: 'inset-y-0 -left-[3px] w-1.5 cursor-col-resize',
+    right: 'inset-y-0 -right-[3px] w-1.5 cursor-col-resize',
+    top: '-top-[3px] inset-x-0 h-1.5 cursor-row-resize',
+}
 
 export function Splitter({ side, value, min, max, onChange }: SplitterProps)
 {
     const axis = AXIS[side]
-    const down = (event: React.PointerEvent) =>
+    const down = (event: ReactPointerEvent) =>
     {
         event.preventDefault()
         const origin = axis === 'x' ? event.clientX : event.clientY
@@ -48,7 +55,7 @@ export function Splitter({ side, value, min, max, onChange }: SplitterProps)
     }
     return (
         <div
-            className={`splitter splitter--${side}`}
+            className={`absolute z-[5] transition-colors hover:bg-primary ${BOX[side]}`}
             onPointerDown={down}
             role="separator"
             aria-orientation={axis === 'x' ? 'vertical' : 'horizontal'}
