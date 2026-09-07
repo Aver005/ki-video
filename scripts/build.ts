@@ -8,7 +8,25 @@ const outdir = 'dist'
 const isWindows = process.platform === 'win32'
 const outfile = `${outdir}/ki-video${isWindows ? '.exe' : ''}`
 
-await rm(outdir, { recursive: true, force: true })
+/** Windows держит работающий exe: ни удалить папку, ни перезаписать файл нельзя. */
+function isLocked(error: unknown): boolean
+{
+    const code = (error as { code?: string } | null)?.code
+    return code === 'EPERM' || code === 'EBUSY' || code === 'ENOTEMPTY'
+}
+
+try
+{
+    await rm(outdir, { recursive: true, force: true })
+}
+catch (error)
+{
+    if (!isLocked(error)) throw error
+    console.error(
+        `не могу очистить ${outdir}: файлы заняты. Закрой запущенный ki-video и повтори сборку.`,
+    )
+    process.exit(1)
+}
 
 const result = await Bun.build(
 {
