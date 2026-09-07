@@ -1,11 +1,11 @@
 // Плеер превью: уменьшенные копии в скрытых элементах, композиция кадра на canvas той же математикой, что и экспорт.
 
-import type { MediaAsset, MediaItem, Project, Track } from '@shared/model'
-import { isMediaItem, itemEnd } from '@shared/model'
-import { defaultFrame, frameToRegion, interpolateFrame } from '@shared/frame'
-import { interpolateKeys } from '@shared/keys'
-import { contentAt, projectDuration } from '@shared/timeline'
-import { mediaUrl } from '@app/api'
+import type { MediaAsset, MediaItem, Project, Track } from '@core/model'
+import { isMediaItem, itemEnd } from '@core/model'
+import { defaultFrame, frameToRegion, interpolateFrame } from '@core/frame'
+import { interpolateKeys } from '@core/keys'
+import { contentAt, projectDuration } from '@core/timeline'
+import { mediaUrl } from '@shared/api/client'
 import { drawOverlays } from '@app/player/overlays'
 
 export interface PlayerSource

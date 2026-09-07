@@ -1,11 +1,11 @@
 import { Plus } from 'lucide-react'
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import { addTrack, seek } from '@app/store/actions'
 import { TrackLane } from '@app/components/TrackLane'
 import { CueLane } from '@app/components/CueLane'
 import { Playhead } from '@app/components/Playhead'
-import { projectDuration } from '@shared/timeline'
-import { formatTime } from '@shared/math'
+import { projectDuration } from '@core/timeline'
+import { formatTime } from '@core/math'
 
 const PAD_SEC = 5
 export const HEAD_WIDTH = 132

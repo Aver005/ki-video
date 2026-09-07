@@ -2,8 +2,8 @@
 
 import { basename, join } from 'node:path'
 import { mkdir, rename, rm, stat } from 'node:fs/promises'
-import type { MediaAsset, MediaKind } from '@shared/model'
-import { kindByExtension } from '@shared/api'
+import type { MediaAsset, MediaKind } from '@core/model'
+import { kindByExtension } from '@core/api'
 import type { FfmpegTools } from '@server/ffmpeg/locate'
 import { probe } from '@server/ffmpeg/probe'
 import { ingest } from '@server/ffmpeg/ingest'

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Check, Plus, Trash } from 'lucide-react'
-import { getState, useStore } from '@app/store/store'
+import { getState, useStore } from '@shared/model/store'
 import { removeCue, setCues, update, updateCue } from '@app/store/actions'
-import { Slider } from '@app/components/Slider'
-import { NumberField } from '@app/components/NumberField'
-import { SUBTITLE_STYLES } from '@shared/presets'
-import { parseCues, printSimple } from '@shared/subtitles'
-import type { SubtitleCue, SubtitlePreset } from '@shared/model'
+import { SliderField } from '@shared/ui/kit/SliderField'
+import { NumberField } from '@shared/ui/kit/NumberField'
+import { SUBTITLE_STYLES } from '@core/presets'
+import { parseCues, printSimple } from '@core/subtitles'
+import type { SubtitleCue, SubtitlePreset } from '@core/model'
 
 const PRESET_IDS = Object.keys(SUBTITLE_STYLES) as SubtitlePreset[]
 
@@ -27,8 +27,11 @@ function CueEditor({ cue }: { cue: SubtitleCue })
             <div className="field-row">
                 <NumberField
                     label="Начало, с"
+                    className="flex-1"
                     value={cue.start}
-                    onCommit={(start) =>
+                    min={0}
+                    step={0.1}
+                    onChange={(start) =>
                         updateCue(cue.id,
                         {
                             start,
@@ -38,9 +41,11 @@ function CueEditor({ cue }: { cue: SubtitleCue })
                 />
                 <NumberField
                     label="Конец, с"
+                    className="flex-1"
                     value={cue.end}
                     min={cue.start + 0.1}
-                    onCommit={(end) => updateCue(cue.id, { end })}
+                    step={0.1}
+                    onChange={(end) => updateCue(cue.id, { end })}
                 />
             </div>
             <button
@@ -108,11 +113,12 @@ export function SubtitlesTab()
                     </button>
                 ))}
             </div>
-            <Slider
+            <SliderField
                 label="Высота"
                 value={subtitles.y}
                 min={0.1}
                 max={0.95}
+                neutral={0.8}
                 onChange={(v, final) =>
                     update((p) =>
                     {

@@ -2,10 +2,10 @@
 
 import { join } from 'node:path'
 import { mkdir, rm } from 'node:fs/promises'
-import type { MediaAsset, Project } from '@shared/model'
-import type { ExportJob } from '@shared/api'
-import { buildAss, hasOverlays } from '@shared/ffmpeg/ass'
-import { buildExportPlan, GRAPH_FILE } from '@shared/ffmpeg/export-args'
+import type { MediaAsset, Project } from '@core/model'
+import type { ExportJob } from '@core/api'
+import { buildAss, hasOverlays } from '@core/ffmpeg/ass'
+import { buildExportPlan, GRAPH_FILE } from '@core/ffmpeg/export-args'
 import type { FfmpegTools } from '@server/ffmpeg/locate'
 import { runFfmpeg } from '@server/ffmpeg/run'
 

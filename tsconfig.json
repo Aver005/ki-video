@@ -2,7 +2,18 @@
     "extends": "./tsconfig.base.json",
     "compilerOptions": {
         "lib": ["ESNext"],
-        "types": ["bun-types"]
+        "types": ["bun-types"],
+        "baseUrl": ".",
+        "paths": {
+            "@core/*": ["src/core/*"],
+            "@server/*": ["src/server/*"],
+            "@app/*": ["src/app/*"],
+            "@pages/*": ["src/pages/*"],
+            "@widgets/*": ["src/widgets/*"],
+            "@features/*": ["src/features/*"],
+            "@entities/*": ["src/entities/*"],
+            "@shared/*": ["src/shared/*"]
+        }
     },
-    "include": ["src/server", "src/shared", "src/types", "tests", "scripts"]
+    "include": ["src/server", "src/core", "src/types", "tests", "scripts"]
 }

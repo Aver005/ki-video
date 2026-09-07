@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { getPlayer } from '@app/hooks/usePlayer'
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import { currentContent, setFrame } from '@app/store/actions'
-import { frameToRegion } from '@shared/frame'
+import { frameToRegion } from '@core/frame'
 
 const CANVAS_HEIGHT = 960
 const ZOOM_STEP = 1.1

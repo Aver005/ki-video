@@ -1,5 +1,5 @@
 import { Pencil } from 'lucide-react'
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import {
     addText,
     currentContent,
@@ -12,8 +12,8 @@ import { QuickPreset } from '@app/components/QuickPreset'
 import { FrameEditor } from '@app/components/editors/FrameEditor'
 import { BoxEditor } from '@app/components/editors/BoxEditor'
 import { TextEditor } from '@app/components/editors/TextEditor'
-import { TEXT_PRESETS } from '@shared/presets'
-import { isMediaItem, isTextItem } from '@shared/model'
+import { TEXT_PRESETS } from '@core/presets'
+import { isMediaItem, isTextItem } from '@core/model'
 
 /** Свойства выделенного элемента; без выделения — кадр под курсором и что можно добавить. */
 export function ItemTab()

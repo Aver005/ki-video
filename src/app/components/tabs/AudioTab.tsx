@@ -1,9 +1,9 @@
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import { update } from '@app/store/actions'
-import { Slider } from '@app/components/Slider'
+import { SliderField } from '@shared/ui/kit/SliderField'
 import { PresetRow } from '@app/components/PresetRow'
-import { AUDIO_PRESETS } from '@shared/presets'
-import type { AudioChain } from '@shared/model'
+import { AUDIO_PRESETS } from '@core/presets'
+import type { AudioChain } from '@core/model'
 
 const LOUDNESS = [
     { value: 0, label: 'Выкл' },
@@ -40,11 +40,12 @@ export function AudioTab()
                 }
                 onPick={(preset) => patch({ ...preset.value })}
             />
-            <Slider
+            <SliderField
                 label="Шумодав"
                 value={audio.denoise}
                 min={0}
                 max={1}
+                neutral={0}
                 onChange={(v, final) => patch({ denoise: v }, final)}
             />
             <label className="check">

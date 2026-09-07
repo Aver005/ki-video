@@ -1,5 +1,5 @@
-import { thumbUrl } from '@app/api'
-import { useStore } from '@app/store/store'
+import { thumbUrl } from '@shared/api/client'
+import { useStore } from '@shared/model/store'
 import {
     maxDuration,
     placeItem,
@@ -15,7 +15,7 @@ import {
     MIN_ITEM_SECONDS,
     type Item,
     type Track,
-} from '@shared/model'
+} from '@core/model'
 
 interface ItemBlockProps
 {

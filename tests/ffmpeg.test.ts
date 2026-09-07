@@ -1,23 +1,23 @@
 import { describe, expect, test } from 'bun:test'
-import { piecewiseLinear } from '@shared/ffmpeg/expr'
-import { assColor, assTime, buildAss } from '@shared/ffmpeg/ass'
+import { piecewiseLinear } from '@core/ffmpeg/expr'
+import { assColor, assTime, buildAss } from '@core/ffmpeg/ass'
 import {
     audioFilters,
     colorFilters,
     frameFilters,
     overlayFilters,
-} from '@shared/ffmpeg/filters'
+} from '@core/ffmpeg/filters'
 import {
     buildExportPlan,
     ExportError,
     GRAPH_FILE,
     GRAPH_OPTION,
     SOFTWARE_CAPS,
-} from '@shared/ffmpeg/export-args'
-import { createProject, NEUTRAL_COLOR, SILENT_AUDIO } from '@shared/model'
-import type { BoxKeyframe, ColorKeyframe } from '@shared/model'
-import type { Project } from '@shared/model'
-import { num } from '@shared/math'
+} from '@core/ffmpeg/export-args'
+import { createProject, NEUTRAL_COLOR, SILENT_AUDIO } from '@core/model'
+import type { BoxKeyframe, ColorKeyframe } from '@core/model'
+import type { Project } from '@core/model'
+import { num } from '@core/math'
 import {
     assetMap,
     imageAsset,

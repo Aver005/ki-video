@@ -4,9 +4,9 @@ import {
     clampFrame,
     frameToRegion,
     interpolateFrame,
-} from '@shared/frame'
-import { interpolateKeys, removeKeyAt, upsertKey } from '@shared/keys'
-import type { FrameKeyframe } from '@shared/model'
+} from '@core/frame'
+import { interpolateKeys, removeKeyAt, upsertKey } from '@core/keys'
+import type { FrameKeyframe } from '@core/model'
 
 const source = { width: 1728, height: 1080 }
 const output = { width: 1080, height: 1920 }

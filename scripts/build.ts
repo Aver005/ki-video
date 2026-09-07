@@ -1,5 +1,6 @@
 // Сборка одного exe: сервер, интерфейс и C-исходник пиков внутри. ffmpeg остаётся внешним.
 
+import tailwind from 'bun-plugin-tailwind'
 import { rm } from 'node:fs/promises'
 import pkg from '../package.json' with { type: 'json' }
 
@@ -13,6 +14,7 @@ const result = await Bun.build(
 {
     entrypoints: ['./src/server/main.ts'],
     target: 'bun',
+    plugins: [tailwind],
     minify: true,
     sourcemap: 'none',
     define: { 'process.env.NODE_ENV': JSON.stringify('production') },

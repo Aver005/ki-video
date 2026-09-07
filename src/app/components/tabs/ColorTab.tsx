@@ -1,5 +1,5 @@
 import { Diamond, RotateCcw } from 'lucide-react'
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import {
     addColorKey,
     clearColorKeys,
@@ -8,11 +8,12 @@ import {
     seek,
     setColor,
 } from '@app/store/actions'
-import { Slider } from '@app/components/Slider'
+import { SliderField } from '@shared/ui/kit/SliderField'
 import { PresetRow } from '@app/components/PresetRow'
-import { COLOR_PRESETS } from '@shared/presets'
-import { KEY_EPSILON } from '@shared/keys'
-import type { ColorGrade, ColorKeyframe } from '@shared/model'
+import { COLOR_PRESETS } from '@core/presets'
+import { NEUTRAL_COLOR } from '@core/model'
+import { KEY_EPSILON } from '@core/keys'
+import type { ColorGrade, ColorKeyframe } from '@core/model'
 
 const FIELDS:
 {
@@ -53,12 +54,13 @@ export function ColorTab()
                 onPick={(preset) => setColor(preset.value)}
             />
             {FIELDS.map((f) => (
-                <Slider
+                <SliderField
                     key={f.key}
                     label={f.label}
                     value={color[f.key]}
                     min={f.min}
                     max={f.max}
+                    neutral={NEUTRAL_COLOR[f.key]}
                     onChange={(v, final) => setColor({ [f.key]: v }, final)}
                 />
             ))}

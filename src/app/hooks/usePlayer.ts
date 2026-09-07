@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { Player } from '@app/player/Player'
-import { getState, setState, useStore } from '@app/store/store'
+import { getState, setState, useStore } from '@shared/model/store'
 
 const player = new Player()
 

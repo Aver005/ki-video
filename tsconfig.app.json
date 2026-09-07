@@ -1,8 +1,20 @@
 {
-    "extends": "./tsconfig.base.json",
+    "extends": "./tsconfig.json",
     "compilerOptions": {
         "lib": ["ESNext", "DOM", "DOM.Iterable"],
-        "types": []
+        "types": [],
+        // react-aria-components не совместим с exactOptionalPropertyTypes.
+        // Домен и сервер проверяются строго через tsconfig.json.
+        "exactOptionalPropertyTypes": false
     },
-    "include": ["src/app", "src/shared", "src/types"]
+    "include": [
+        "src/app",
+        "src/pages",
+        "src/widgets",
+        "src/features",
+        "src/entities",
+        "src/shared",
+        "src/core",
+        "src/types"
+    ]
 }

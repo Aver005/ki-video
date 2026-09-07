@@ -2,16 +2,12 @@
 
 import { join } from 'node:path'
 import { mkdir, readdir } from 'node:fs/promises'
-import {
-    PEAKS_PER_SECOND,
-    type MediaAsset,
-    type MediaKind,
-} from '@shared/model'
+import { PEAKS_PER_SECOND, type MediaAsset, type MediaKind } from '@core/model'
 import type { FfmpegTools } from '@server/ffmpeg/locate'
 import { runFfmpeg } from '@server/ffmpeg/run'
 import { probe } from '@server/ffmpeg/probe'
 import { computePeaks } from '@server/peaks'
-import { num } from '@shared/math'
+import { num } from '@core/math'
 
 export const PROXY_FILE = 'proxy.mp4'
 export const STILL_FILE = 'still.jpg'

@@ -1,4 +1,4 @@
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 
 /** Отдельный компонент: только он перерисовывается на каждом кадре воспроизведения. */
 export function Playhead({

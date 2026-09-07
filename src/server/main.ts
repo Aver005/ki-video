@@ -3,7 +3,7 @@
 import { join } from 'node:path'
 import { mkdir } from 'node:fs/promises'
 import index from '@app/index.html'
-import type { ImportRequest, ServerEvent, StatusResponse } from '@shared/api'
+import type { ImportRequest, ServerEvent, StatusResponse } from '@core/api'
 import { loadConfig } from '@server/config'
 import { locateFfmpeg, type FfmpegTools } from '@server/ffmpeg/locate'
 import { ASSET_ID_PATTERN, AssetStore } from '@server/assets'

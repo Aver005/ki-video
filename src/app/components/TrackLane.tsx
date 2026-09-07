@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Volume2, VolumeX, X } from 'lucide-react'
-import { getState, useStore } from '@app/store/store'
+import { getState, useStore } from '@shared/model/store'
 import {
     addAssetToTimeline,
     removeTrack,
@@ -7,8 +7,8 @@ import {
     updateTrack,
 } from '@app/store/actions'
 import { ItemBlock } from '@app/components/ItemBlock'
-import { sortedItems } from '@shared/timeline'
-import type { Track } from '@shared/model'
+import { sortedItems } from '@core/timeline'
+import type { Track } from '@core/model'
 
 interface TrackLaneProps
 {

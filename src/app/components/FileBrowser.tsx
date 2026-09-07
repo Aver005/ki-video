@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowUp, Folder, Plus } from 'lucide-react'
-import { api } from '@app/api'
-import type { FsListing } from '@shared/api'
+import { api } from '@shared/api/client'
+import type { FsListing } from '@core/api'
 
 interface FileBrowserProps
 {

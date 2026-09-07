@@ -1,15 +1,25 @@
 import { useBootstrap } from '@app/hooks/useBootstrap'
 import { useKeyboard } from '@app/hooks/useKeyboard'
 import { usePlayerBinding } from '@app/hooks/usePlayer'
-import { Header } from '@app/components/Header'
 import { MediaBin } from '@app/components/MediaBin'
 import { Preview } from '@app/components/Preview'
-import { Transport } from '@app/components/Transport'
 import { Inspector } from '@app/components/Inspector'
 import { Timeline } from '@app/components/Timeline'
 import { Splitter } from '@app/components/Splitter'
 import { Notice } from '@app/components/Notice'
-import { resizeLayout, useStore } from '@app/store/store'
+import {
+    addKeyframe,
+    removeKeyframe,
+    seek,
+    setTab,
+    setZoom,
+    splitAtPlayhead,
+    update,
+} from '@app/store/actions'
+import { getPlayer } from '@app/hooks/usePlayer'
+import { AppHeader } from '@widgets/app-header'
+import { TransportBar } from '@widgets/transport'
+import { resizeLayout, useStore } from '@shared/model/store'
 
 export function App()
 {
@@ -28,7 +38,15 @@ export function App()
                 gridTemplateRows: `44px minmax(0, 1fr) ${timelineHeight}px`,
             }}
         >
-            <Header />
+            <AppHeader
+                onRename={(name) =>
+                    update((p) =>
+                    {
+                        p.name = name
+                    }, false)
+                }
+                onExport={() => setTab('export')}
+            />
             <aside className="app__bin">
                 <MediaBin />
                 <Splitter
@@ -43,7 +61,15 @@ export function App()
             </aside>
             <main className="app__stage">
                 <Preview />
-                <Transport />
+                <TransportBar
+                    onRewind={() => seek(0)}
+                    onTogglePlay={() => getPlayer().toggle()}
+                    onKeyframeChange={(add) =>
+                        add ? addKeyframe() : removeKeyframe()
+                    }
+                    onSplit={splitAtPlayhead}
+                    onZoom={setZoom}
+                />
             </main>
             <aside className="app__inspector">
                 <Splitter

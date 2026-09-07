@@ -1,8 +1,8 @@
 import { Trash } from 'lucide-react'
 import { maxDuration, placeItem, removeItem } from '@app/store/actions'
-import { NumberField } from '@app/components/NumberField'
-import { MIN_ITEM_SECONDS, isMediaItem } from '@shared/model'
-import type { Item, MediaAsset } from '@shared/model'
+import { NumberField } from '@shared/ui/kit/NumberField'
+import { MIN_ITEM_SECONDS, isMediaItem } from '@core/model'
+import type { Item, MediaAsset } from '@core/model'
 
 interface TimingRowProps
 {
@@ -20,16 +20,21 @@ export function TimingRow({ item, asset }: TimingRowProps)
             <div className="field-row">
                 <NumberField
                     label="Начало, с"
+                    className="flex-1"
                     value={item.start}
-                    onCommit={(start) =>
+                    min={0}
+                    step={0.1}
+                    onChange={(start) =>
                         placeItem(item.id, { start, duration: item.duration })
                     }
                 />
                 <NumberField
                     label="Длина, с"
+                    className="flex-1"
                     value={item.duration}
                     min={MIN_ITEM_SECONDS}
-                    onCommit={(duration) =>
+                    step={0.1}
+                    onChange={(duration) =>
                         placeItem(item.id,
                         {
                             start: item.start,

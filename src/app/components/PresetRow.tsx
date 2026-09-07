@@ -1,4 +1,4 @@
-import type { Preset } from '@shared/presets'
+import type { Preset } from '@core/presets'
 
 interface PresetRowProps<T>
 {

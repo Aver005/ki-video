@@ -4,7 +4,6 @@ import type {
     BoxKeyframe,
     ColorGrade,
     ColorKeyframe,
-    FrameKeyframe,
     FrameState,
     Item,
     MediaAsset,
@@ -15,7 +14,7 @@ import type {
     TextItem,
     Track,
     TrackKind,
-} from '@shared/model'
+} from '@core/model'
 import {
     IMAGE_MAX_SECONDS,
     IMAGE_SECONDS,
@@ -26,30 +25,26 @@ import {
     isMediaItem,
     isTextItem,
     itemEnd,
-} from '@shared/model'
-import { clampFrame, defaultFrame, interpolateFrame } from '@shared/frame'
-import {
-    findKeyAt,
-    interpolateKeys,
-    removeKeyAt,
-    upsertKey,
-} from '@shared/keys'
+} from '@core/model'
+import { clampFrame } from '@core/frame'
+import { findKeyAt, interpolateKeys, removeKeyAt, upsertKey } from '@core/keys'
 import {
     clampContentStart,
     contentAt,
     contentTrack,
     findItem,
     trackDuration,
-} from '@shared/timeline'
-import { TEXT_PRESETS } from '@shared/presets'
-import { api } from '@app/api'
+} from '@core/timeline'
+import { TEXT_PRESETS } from '@core/presets'
+import { contentAtTime, type CurrentContent } from '@entities/timeline'
+import { api } from '@shared/api/client'
 import { getPlayer } from '@app/hooks/usePlayer'
 import {
     getState,
     setState,
     type InspectorTab,
     type Selection,
-} from '@app/store/store'
+} from '@shared/model/store'
 
 const HISTORY_LIMIT = 100
 const SAVE_DELAY_MS = 400
@@ -431,30 +426,11 @@ export function splitAtPlayhead(): void
     })
 }
 
-export interface CurrentContent
-{
-    item: MediaItem
-    asset: MediaAsset
-    localT: number
-    frame: FrameState
-    keyframe: FrameKeyframe | undefined
-}
-
-/** Элемент дорожки содержимого под курсором вместе с интерполированным окном кадрирования. */
+/** Элемент дорожки содержимого под курсором. Сама выборка живёт в entities/timeline. */
 export function currentContent(): CurrentContent | null
 {
     const { project, time, assets } = getState()
-    if (!project) return null
-    const at = contentAt(project, time)
-    const asset = at ? assets[at.item.assetId] : undefined
-    if (!at || !asset) return null
-    return {
-        item: at.item,
-        asset,
-        localT: at.localT,
-        frame: interpolateFrame(at.item.frame, at.localT, defaultFrame(asset)),
-        keyframe: findKeyAt(at.item.frame, at.localT),
-    }
+    return contentAtTime(project, time, assets)
 }
 
 export interface SelectedItem

@@ -3,7 +3,7 @@
 import { readdir, stat } from 'node:fs/promises'
 import { dirname, extname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
-import { MEDIA_EXTENSIONS, type FsEntry, type FsListing } from '@shared/api'
+import { MEDIA_EXTENSIONS, type FsEntry, type FsListing } from '@core/api'
 
 export function defaultDir(): string
 {

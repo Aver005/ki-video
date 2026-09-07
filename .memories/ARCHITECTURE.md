@@ -4,13 +4,31 @@
 ## Слои
 
 ```
-src/shared  ← чистый код без Bun и DOM. Модель, математика, генераторы ffmpeg-аргументов и ASS.
-src/server  ← Bun: процессы ffmpeg, файлы, HTTP/WS. Зависит от shared.
-src/app     ← браузер: React, canvas. Зависит от shared. Сервер и интерфейс друг о друге не знают.
+src/core    ← чистый изоморфный код без Bun и DOM. Модель, математика, ffmpeg-аргументы, ASS.
+src/server  ← Bun: процессы ffmpeg, файлы, HTTP/WS. Зависит от core.
+интерфейс   ← браузер, разложен по FSD (ниже). Зависит от core.
 ```
 
-Типы для сервера и интерфейса проверяются раздельно (`tsconfig.json` с `bun-types`,
-`tsconfig.app.json` с DOM), иначе DOM-типы ломают `ReadableStream` из Bun.
+Сервер и интерфейс друг о друге не знают. Типы проверяются раздельно (`tsconfig.json` с
+`bun-types`, `tsconfig.app.json` с DOM), иначе DOM-типы ломают `ReadableStream` из Bun.
+
+### Feature-Sliced Design в интерфейсе
+
+```
+src/app       ← точка входа, App.tsx, стили, оставшийся неперенесённый код
+src/pages     ← пока пусто
+src/widgets   ← app-header, transport
+src/features  ← пока пусто
+src/entities  ← project (селекторы), timeline (текущий элемент под курсором)
+src/shared    ← ui (компоненты shadcn), api/client.ts, model/store.ts, lib, hooks
+```
+
+Слой видит только слои ниже себя плюс `@core/*`. Импорты всегда через алиасы, в том числе внутри
+среза: `@app/*`, `@pages/*`, `@widgets/*`, `@features/*`, `@entities/*`, `@shared/*`, `@core/*`.
+Публичный вход среза — его `index.ts`; исключение `@shared/ui/*`, куда файлы кладёт CLI shadcn.
+
+Незакрытый долг миграции: `src/app/store/actions.ts` (766 строк) — слой app, поэтому слои ниже
+его не видят. Пока действия попадают в виджеты свойствами из `App.tsx`.
 
 ## Поток данных
 
@@ -21,7 +39,7 @@ src/app     ← браузер: React, canvas. Зависит от shared. Се�
    (`kindByExtension`), для файлов без видеодорожки — `audio`.
 2. Проект: один `project.json`. Интерфейс держит копию в сторе, шлёт PUT с задержкой 400 мс.
 3. Превью: `Player` держит свой источник на каждый элемент таймлайна (`<video>`, `<img>` или `<audio>`),
-   рисует базу через `frameToRegion` из `shared/frame.ts`, поверх — наложения по их геометрии,
+   рисует базу через `frameToRegion` из `core/frame.ts`, поверх — наложения по их геометрии,
    затем текст и субтитры. Время ведёт видео под курсором; на картинке и в зазоре — часы кадра.
    Коэффициент прокси/исходник = `proxy.width / width`.
 4. Экспорт: `buildExportPlan` собирает аргументы, сервер пишет `subs.ass` в папку задания, запускает
@@ -31,7 +49,7 @@ src/app     ← браузер: React, canvas. Зависит от shared. Се�
 
 `Project.tracks`: первая дорожка `content` — база кадра, дальше `overlay` (наложения и текст) в порядке
 наложения, `audio` — только звук. Элемент стоит на шкале проекта (`start`, `duration`), у медиа есть
-`offset` внутри исходника. Раскладка базы — `contentSegments` из `shared/timeline.ts`: зазоры становятся
+`offset` внутри исходника. Раскладка базы — `contentSegments` из `core/timeline.ts`: зазоры становятся
 чёрными кусками, наезды — переходами. Длительность проекта — самый дальний край всех дорожек.
 
 ## Кадр 9:16 из горизонтального видео
@@ -53,6 +71,17 @@ src/app     ← браузер: React, canvas. Зависит от shared. Се�
 Каждый элемент — свой вход ffmpeg (`-ss/-t`, у картинки `-loop 1 -t`). Наложение масштабируется долей
 кадра, поворачивается `rotate ... c=none` по прозрачному фону, гасится `colorchannelmixer=aa` и
 `fade=alpha`, встаёт на место через `setpts+start` и `overlay ... enable`.
+
+## Интерфейс: shadcn на React Aria
+
+Компоненты ставятся официальным CLI shadcn с базой React Aria: `bunx shadcn@latest add <имя>`.
+Настройки в `components.json` (стиль `aria-nova`, палитра `zinc`), файлы кладутся в `src/shared/ui`.
+Стили собирает Tailwind v4 через `bun-plugin-tailwind` — он подключён и к dev-серверу
+(`bunfig.toml`), и к сборке exe (`scripts/build.ts`).
+
+Единственный вход стилей — `src/app/styles/globals.css`. Старые `theme.css`, `layout.css`,
+`animations.css` втянуты в него через `layer(base)` и `layer(components)`: они лежат ниже утилит
+Tailwind и по мере переноса компонентов вычищаются.
 
 ## Текст и субтитры
 

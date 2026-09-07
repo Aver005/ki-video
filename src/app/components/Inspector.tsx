@@ -1,4 +1,4 @@
-import { useStore, type InspectorTab } from '@app/store/store'
+import { useStore, type InspectorTab } from '@shared/model/store'
 import { setTab } from '@app/store/actions'
 import { ItemTab } from '@app/components/tabs/ItemTab'
 import { ColorTab } from '@app/components/tabs/ColorTab'

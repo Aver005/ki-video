@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import { notify } from '@app/store/actions'
 
 export function Notice()

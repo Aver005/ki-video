@@ -1,8 +1,8 @@
 // Один проект на приложение: читаем и пишем project.json в папке данных.
 
 import { join } from 'node:path'
-import { createProject, type Project } from '@shared/model'
-import { normalizeProject } from '@shared/normalize'
+import { createProject, type Project } from '@core/model'
+import { normalizeProject } from '@core/normalize'
 
 /** Разбор входящего проекта: приводит поля к модели и переносит старую версию. */
 export function parseProject(value: unknown): Project | null

@@ -6,7 +6,7 @@ import { parseProject } from '@server/project'
 import { isOwnRequest } from '@server/http/guard'
 import { assetIdFor } from '@server/assets'
 import { toProbeResult } from '@server/ffmpeg/probe'
-import { createProject } from '@shared/model'
+import { createProject } from '@core/model'
 
 describe('peaks', () =>
 {

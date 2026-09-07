@@ -1,7 +1,7 @@
-import { useStore } from '@app/store/store'
+import { useStore } from '@shared/model/store'
 import { seek, select, setTab, updateCue } from '@app/store/actions'
 import { startSpanDrag, type DragEdge } from '@app/components/drag'
-import { MIN_ITEM_SECONDS, type SubtitleCue } from '@shared/model'
+import { MIN_ITEM_SECONDS, type SubtitleCue } from '@core/model'
 
 interface CueLaneProps
 {

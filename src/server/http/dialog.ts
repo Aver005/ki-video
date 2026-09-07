@@ -1,6 +1,6 @@
 // Системный диалог выбора файлов: на Windows через PowerShell без сторонних пакетов.
 
-import { MEDIA_EXTENSIONS } from '@shared/api'
+import { MEDIA_EXTENSIONS } from '@core/api'
 
 const SCRIPT = [
     '[Console]::OutputEncoding = [Text.Encoding]::UTF8',

@@ -1,9 +1,9 @@
 // Текст и субтитры на canvas превью в тех же пропорциях, что задаёт ASS при экспорте.
 
-import type { Project, TextItem } from '@shared/model'
-import { itemEnd } from '@shared/model'
-import { textItems } from '@shared/ffmpeg/ass'
-import { SUBTITLE_STYLES, TEXT_FONT } from '@shared/presets'
+import type { Project, TextItem } from '@core/model'
+import { itemEnd } from '@core/model'
+import { textItems } from '@core/ffmpeg/ass'
+import { SUBTITLE_STYLES, TEXT_FONT } from '@core/presets'
 
 interface DrawTextOptions
 {

@@ -1,10 +1,10 @@
 import { Music, Plus, X } from 'lucide-react'
-import { thumbUrl } from '@app/api'
+import { thumbUrl } from '@shared/api/client'
 import { addAssetToTimeline, removeAsset } from '@app/store/actions'
 import { ASSET_DRAG_TYPE } from '@app/components/TrackLane'
-import { formatTime } from '@shared/math'
-import type { BinView } from '@app/store/store'
-import type { MediaAsset } from '@shared/model'
+import { formatTime } from '@core/math'
+import type { BinView } from '@shared/model/store'
+import type { MediaAsset } from '@core/model'
 
 interface AssetCardProps
 {

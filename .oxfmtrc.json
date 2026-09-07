@@ -9,6 +9,7 @@
     "trailingComma": "all",
     "endOfLine": "lf",
     "ignorePatterns": [
+        "src/shared/ui/*.tsx",
         "src/routeTree.gen.ts",
         "dist/**",
         "build/**",

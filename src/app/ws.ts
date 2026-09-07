@@ -1,9 +1,9 @@
 // WebSocket с сервером: события о файлах и экспорте попадают в стор. Переподключение с паузой.
 
-import type { ServerEvent } from '@shared/api'
-import type { MediaAsset } from '@shared/model'
-import { setState } from '@app/store/store'
-import { api } from '@app/api'
+import type { ServerEvent } from '@core/api'
+import type { MediaAsset } from '@core/model'
+import { setState } from '@shared/model/store'
+import { api } from '@shared/api/client'
 import { getPlayer } from '@app/hooks/usePlayer'
 
 const RECONNECT_MS = 1500

@@ -5,7 +5,7 @@ import {
     contentSegments,
     projectDuration,
     segmentsDuration,
-} from '@shared/timeline'
+} from '@core/timeline'
 import { item, project, track } from './factory'
 
 describe('timeline', () =>

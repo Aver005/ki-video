@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { PEAKS_PER_SECOND } from '@shared/model'
+import { PEAKS_PER_SECOND } from '@core/model'
 
 interface WaveformProps
 {

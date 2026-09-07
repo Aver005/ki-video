@@ -10,7 +10,7 @@ import {
     undo,
 } from '@app/store/actions'
 import { getPlayer } from '@app/hooks/usePlayer'
-import { getState } from '@app/store/store'
+import { getState } from '@shared/model/store'
 
 const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
 

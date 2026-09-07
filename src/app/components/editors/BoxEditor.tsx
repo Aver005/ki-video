@@ -8,10 +8,11 @@ import {
     setBox,
     updateItem,
 } from '@app/store/actions'
-import { Slider } from '@app/components/Slider'
+import { SliderField } from '@shared/ui/kit/SliderField'
 import { TimingRow } from '@app/components/editors/TimingRow'
-import { KEY_EPSILON } from '@shared/keys'
-import type { MediaAsset, MediaItem, OverlayBox } from '@shared/model'
+import { KEY_EPSILON } from '@core/keys'
+import type { MediaAsset, MediaItem, OverlayBox } from '@core/model'
+import { DEFAULT_BOX } from '@core/model'
 
 interface BoxEditorProps
 {
@@ -47,12 +48,13 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
             {withGeometry && (
                 <>
                     {GEOMETRY.map((field) => (
-                        <Slider
+                        <SliderField
                             key={field.key}
                             label={field.label}
                             value={at.box[field.key]}
                             min={field.min}
                             max={field.max}
+                            neutral={DEFAULT_BOX[field.key]}
                             step={
                                 field.key === 'width'
                                     ? 0.005
@@ -112,30 +114,33 @@ export function BoxEditor({ item, asset, withGeometry }: BoxEditorProps)
                 </>
             )}
             <div className="section-title">Появление</div>
-            <Slider
+            <SliderField
                 label="Ввод, с"
                 value={item.fadeIn}
                 min={0}
                 max={Math.max(0.5, item.duration / 2)}
+                neutral={0}
                 onChange={(v, final) =>
                     updateItem(item.id, { fadeIn: v }, final)
                 }
             />
-            <Slider
+            <SliderField
                 label="Уход, с"
                 value={item.fadeOut}
                 min={0}
                 max={Math.max(0.5, item.duration / 2)}
+                neutral={0}
                 onChange={(v, final) =>
                     updateItem(item.id, { fadeOut: v }, final)
                 }
             />
             {hasSound && (
-                <Slider
+                <SliderField
                     label="Громкость"
                     value={item.volume}
                     min={0}
                     max={2}
+                    neutral={1}
                     onChange={(v, final) =>
                         updateItem(item.id, { volume: v }, final)
                     }

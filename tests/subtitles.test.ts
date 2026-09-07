@@ -1,10 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import {
-    parseCues,
-    parseSimple,
-    parseSrt,
-    printSimple,
-} from '@shared/subtitles'
+import { parseCues, parseSimple, parseSrt, printSimple } from '@core/subtitles'
 
 describe('subtitles', () =>
 {

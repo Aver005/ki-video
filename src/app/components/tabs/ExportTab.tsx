@@ -1,12 +1,12 @@
 import { Download, FolderOpen, X } from 'lucide-react'
-import { api } from '@app/api'
-import { getState, useStore } from '@app/store/store'
+import { api } from '@shared/api/client'
+import { getState, useStore } from '@shared/model/store'
 import { notify, update } from '@app/store/actions'
 import { getPlayer } from '@app/hooks/usePlayer'
-import { Slider } from '@app/components/Slider'
-import { formatTime } from '@shared/math'
-import { projectDuration } from '@shared/timeline'
-import type { VideoCodec } from '@shared/model'
+import { SliderField } from '@shared/ui/kit/SliderField'
+import { formatTime } from '@core/math'
+import { projectDuration } from '@core/timeline'
+import type { VideoCodec } from '@core/model'
 
 function isCodec(value: string): value is VideoCodec
 {
@@ -110,13 +110,12 @@ export function ExportTab()
                     </select>
                 </label>
             </div>
-            <Slider
-                label="Качество"
+            <SliderField
+                label="Качество, CQ"
                 value={output.quality}
                 min={16}
                 max={34}
                 step={1}
-                format={(v) => `CQ ${v}`}
                 onChange={(v, final) =>
                     update((p) =>
                     {

@@ -9,7 +9,7 @@ import {
     type TextItem,
     type Track,
     type TrackKind,
-} from '@shared/model'
+} from '@core/model'
 
 export const videoAsset: MediaAsset =
 {

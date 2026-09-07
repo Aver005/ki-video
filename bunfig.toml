@@ -1,5 +1,6 @@
 [serve.static]
-# Плагины бандлера для HTML-импортов не нужны: TSX и CSS Bun собирает сам.
+# Tailwind собирается плагином: без него @import "tailwindcss" останется строкой.
+plugins = ["bun-plugin-tailwind"]
 
 [test]
 root = "./tests"

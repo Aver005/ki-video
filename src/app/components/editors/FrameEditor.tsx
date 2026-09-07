@@ -9,12 +9,12 @@ import {
     splitAtPlayhead,
     updateItem,
 } from '@app/store/actions'
-import { Slider } from '@app/components/Slider'
+import { SliderField } from '@shared/ui/kit/SliderField'
 import { TimingRow } from '@app/components/editors/TimingRow'
-import { MAX_ZOOM, MIN_ZOOM } from '@shared/frame'
-import { KEY_EPSILON } from '@shared/keys'
-import { TRANSITIONS } from '@shared/presets'
-import type { MediaAsset, MediaItem, TransitionKind } from '@shared/model'
+import { MAX_ZOOM, MIN_ZOOM } from '@core/frame'
+import { KEY_EPSILON } from '@core/keys'
+import { TRANSITIONS } from '@core/presets'
+import type { MediaAsset, MediaItem, TransitionKind } from '@core/model'
 
 interface FrameEditorProps
 {
@@ -54,29 +54,32 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                 Кадр · {asset.name}
                 <span className="muted"> {localT.toFixed(2)}s</span>
             </div>
-            <Slider
+            <SliderField
                 label="Центр X"
                 value={frame.cx}
                 min={0}
                 max={asset.width}
                 step={1}
+                neutral={asset.width / 2}
                 onChange={(v, final) => setFrame({ cx: v }, final)}
             />
-            <Slider
+            <SliderField
                 label="Центр Y"
                 value={frame.cy}
                 min={0}
                 max={asset.height}
                 step={1}
+                neutral={asset.height / 2}
                 onChange={(v, final) => setFrame({ cy: v }, final)}
             />
-            <Slider
+            <SliderField
                 label="Зум"
                 value={frame.zoom}
                 min={MIN_ZOOM}
                 max={MAX_ZOOM}
                 step={0.01}
-                format={(v) => `${v.toFixed(2)}×`}
+                neutral={1}
+                unit="×"
                 onChange={(v, final) => setFrame({ zoom: v }, final)}
             />
             <div className="row-actions">
@@ -116,11 +119,12 @@ export function FrameEditor({ item, asset }: FrameEditorProps)
                 </div>
             )}
             <div className="section-title">Звук и переход</div>
-            <Slider
+            <SliderField
                 label="Громкость"
                 value={item.volume}
                 min={0}
                 max={2}
+                neutral={1}
                 onChange={(v, final) =>
                     updateItem(item.id, { volume: v }, final)
                 }

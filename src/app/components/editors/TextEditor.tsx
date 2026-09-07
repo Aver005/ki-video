@@ -1,7 +1,7 @@
 import { updateItem } from '@app/store/actions'
-import { Slider } from '@app/components/Slider'
+import { SliderField } from '@shared/ui/kit/SliderField'
 import { TimingRow } from '@app/components/editors/TimingRow'
-import type { TextAnimation, TextItem } from '@shared/model'
+import type { TextAnimation, TextItem } from '@core/model'
 
 const ANIMATIONS: { value: TextAnimation; label: string }[] = [
     { value: 'none', label: 'Без анимации' },
@@ -28,21 +28,23 @@ export function TextEditor({ item }: { item: TextItem })
                 onChange={(e) => patch({ text: e.target.value }, false)}
                 onBlur={() => patch({}, true)}
             />
-            <Slider
+            <SliderField
                 label="X"
                 value={item.x}
                 min={0}
                 max={1}
+                neutral={0.5}
                 onChange={(v, final) => patch({ x: v }, final)}
             />
-            <Slider
+            <SliderField
                 label="Y"
                 value={item.y}
                 min={0}
                 max={1}
+                neutral={0.5}
                 onChange={(v, final) => patch({ y: v }, final)}
             />
-            <Slider
+            <SliderField
                 label="Кегль"
                 value={item.size}
                 min={24}

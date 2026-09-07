@@ -1,11 +1,11 @@
 // Загрузка при старте: статус сервера, файлы, проект; затем подписка на события и сохранение при закрытии.
 
 import { useEffect } from 'react'
-import { api } from '@app/api'
+import { api } from '@shared/api/client'
 import { connectEvents } from '@app/ws'
-import { setState } from '@app/store/store'
+import { setState } from '@shared/model/store'
 import { notify, saveOnUnload } from '@app/store/actions'
-import type { MediaAsset } from '@shared/model'
+import type { MediaAsset } from '@core/model'
 
 function byId(list: MediaAsset[]): Record<string, MediaAsset>
 {

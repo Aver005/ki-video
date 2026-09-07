@@ -1,8 +1,8 @@
 // Поиск ffmpeg/ffprobe и определение возможностей: NVENC, аппаратное декодирование.
 
 import { join } from 'node:path'
-import type { EncoderCaps } from '@shared/ffmpeg/export-args'
-import { SOFTWARE_CAPS } from '@shared/ffmpeg/export-args'
+import type { EncoderCaps } from '@core/ffmpeg/export-args'
+import { SOFTWARE_CAPS } from '@core/ffmpeg/export-args'
 
 export interface FfmpegTools
 {
