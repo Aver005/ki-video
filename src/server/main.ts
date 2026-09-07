@@ -233,6 +233,14 @@ console.log(
 )
 if (config.openWindow)
 {
-    const opened = await openAppWindow(url, config.dataDir)
-    console.log(`окно: ${opened}`)
+    const appWindow = await openAppWindow(url, config.dataDir)
+    console.log(`окно: ${appWindow.opener}`)
+    // Закрыли окно — приложению больше незачем жить.
+    void appWindow.process?.exited.then(() =>
+    {
+        console.log('окно закрыто, останавливаюсь')
+        exporter.stopActive()
+        void server.stop(true)
+        process.exit(0)
+    })
 }

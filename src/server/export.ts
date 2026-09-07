@@ -181,6 +181,12 @@ export class ExportService
         }
     }
 
+    /** Гасит текущее задание при остановке сервера: ffmpeg получает отмену, а не осиротеет. */
+    stopActive(): void
+    {
+        this.active?.controller.abort()
+    }
+
     cancel(id: string): boolean
     {
         if (this.active?.id !== id) return false

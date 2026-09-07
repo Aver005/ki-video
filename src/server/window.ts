@@ -23,15 +23,23 @@ async function findBrowser(): Promise<string | null>
     )
 }
 
+export interface AppWindow
+{
+    /** Чем открыли: путь к браузеру или команда системы. */
+    opener: string
+    /** Процесс окна. Есть только у своего браузера: за системным открывателем следить нечего. */
+    process: Bun.Subprocess | null
+}
+
 export async function openAppWindow(
     url: string,
     dataDir: string,
-): Promise<string>
+): Promise<AppWindow>
 {
     const browser = await findBrowser()
     if (browser)
     {
-        Bun.spawn(
+        const child = Bun.spawn(
             [
                 browser,
                 `--app=${url}`,
@@ -43,8 +51,9 @@ export async function openAppWindow(
                 stdout: 'ignore',
                 stderr: 'ignore',
             },
-        ).unref()
-        return browser
+        )
+        child.unref()
+        return { opener: browser, process: child }
     }
     const opener =
         process.platform === 'win32'
@@ -53,7 +62,7 @@ export async function openAppWindow(
               ? ['open', url]
               : ['xdg-open', url]
     Bun.spawn(opener, { stdout: 'ignore', stderr: 'ignore' }).unref()
-    return opener[0] ?? ''
+    return { opener: opener[0] ?? '', process: null }
 }
 
 export function revealInExplorer(path: string): void
