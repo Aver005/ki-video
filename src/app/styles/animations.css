@@ -1,22 +1,22 @@
 /* Единственные анимации: появление модалки и уведомления. */
 @keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modal__card {
-  animation-name: rise;
+    animation-name: rise;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
 }

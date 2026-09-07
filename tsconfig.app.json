@@ -1,8 +1,8 @@
 {
-  "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": []
-  },
-  "include": ["src/app", "src/shared", "src/types"]
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "types": []
+    },
+    "include": ["src/app", "src/shared", "src/types"]
 }
