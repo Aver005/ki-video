@@ -22,7 +22,6 @@ export async function openAppWindow(url: string, dataDir: string): Promise<strin
     Bun.spawn([browser, `--app=${url}`, "--window-size=1500,960", `--user-data-dir=${join(dataDir, "browser-profile")}`, "--no-first-run"], {
       stdout: "ignore",
       stderr: "ignore",
-      windowsHide: true,
     }).unref();
     return browser;
   }
