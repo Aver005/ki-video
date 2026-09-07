@@ -1,0 +1,48 @@
+/* Тема: тёмная, спокойная. Все цвета и размеры — переменные. */
+:root {
+  color-scheme: dark;
+  --bg: #111214;
+  --bg-2: #18191c;
+  --bg-3: #1f2125;
+  --line: #2a2d33;
+  --text: #e6e7ea;
+  --muted: #8a8f98;
+  --accent: #5b8cff;
+  --accent-2: #3f6de0;
+  --danger: #e5484d;
+  --ok: #3ecf8e;
+  --key: #ffcf5c;
+  --radius: 6px;
+  --font: -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
+  --mono: "Cascadia Mono", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.4 var(--font);
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+}
