@@ -225,11 +225,10 @@ export class Player
             const drift = Math.abs(element.currentTime - target)
             if (this.playing)
             {
-                if (element.paused || drift > DRIFT_LIMIT)
-                {
-                    element.currentTime = target
-                    void element.play().catch(() => undefined)
-                }
+                // Перемотка гасит картинку на кадр, поэтому на паузе её не делаем:
+                // элемент уже стоит там, где нужно, достаточно снять его с паузы.
+                if (drift > DRIFT_LIMIT) element.currentTime = target
+                if (element.paused) void element.play().catch(() => undefined)
             }
             else
             {
