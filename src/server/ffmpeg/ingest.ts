@@ -1,8 +1,12 @@
-// Подготовка файла к монтажу за один проход ffmpeg: прокси H.264, миниатюры, PCM для пиков.
+// Подготовка файла к монтажу за один проход ffmpeg: копия для превью, миниатюры, PCM для пиков.
 
 import { join } from 'node:path'
 import { mkdir, readdir } from 'node:fs/promises'
-import { PEAKS_PER_SECOND, type MediaAsset } from '@shared/model'
+import {
+    PEAKS_PER_SECOND,
+    type MediaAsset,
+    type MediaKind,
+} from '@shared/model'
 import type { FfmpegTools } from '@server/ffmpeg/locate'
 import { runFfmpeg } from '@server/ffmpeg/run'
 import { probe } from '@server/ffmpeg/probe'
@@ -10,12 +14,22 @@ import { computePeaks } from '@server/peaks'
 import { num } from '@shared/math'
 
 export const PROXY_FILE = 'proxy.mp4'
+export const STILL_FILE = 'still.jpg'
+export const SOUND_FILE = 'proxy.m4a'
 export const THUMBS_DIR = 'thumbs'
 const PCM_FILE = 'pcm.raw'
 const PCM_RATE = 8000
 const PROXY_HEIGHT = 720
 const THUMB_HEIGHT = 90
 const MAX_THUMBS = 120
+
+/** Что отдавать интерфейсу для превью и какой у файла тип содержимого. */
+export function mediaFile(kind: MediaKind): { name: string; type: string }
+{
+    if (kind === 'image') return { name: STILL_FILE, type: 'image/jpeg' }
+    if (kind === 'audio') return { name: SOUND_FILE, type: 'audio/mp4' }
+    return { name: PROXY_FILE, type: 'video/mp4' }
+}
 
 export interface IngestResult
 {
@@ -49,13 +63,84 @@ function proxyEncoder(tools: FfmpegTools): string[]
     return ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28']
 }
 
+// Высота приводится к чётной: yuv420p не принимает нечётные размеры.
+const PROXY_SCALE = `scale=-2:'2*trunc(min(${PROXY_HEIGHT},ih)/2)'`
+
+function pcmArgs(): string[]
+{
+    return [
+        '-map',
+        '0:a:0',
+        '-ac',
+        '1',
+        '-ar',
+        String(PCM_RATE),
+        '-f',
+        's16le',
+        PCM_FILE,
+    ]
+}
+
+/** Картинке нужна только уменьшенная копия и одна миниатюра. */
+function imageArgs(): string[]
+{
+    return [
+        '-map',
+        '0:v:0',
+        '-vf',
+        PROXY_SCALE,
+        '-q:v',
+        '3',
+        STILL_FILE,
+        '-map',
+        '0:v:0',
+        '-vf',
+        `scale=-2:${THUMB_HEIGHT}`,
+        '-q:v',
+        '5',
+        join(THUMBS_DIR, '0001.jpg'),
+    ]
+}
+
+function soundArgs(): string[]
+{
+    return ['-map', '0:a:0', '-c:a', 'aac', '-b:a', '128k', SOUND_FILE]
+}
+
+function videoArgs(tools: FfmpegTools, asset: MediaAsset): string[]
+{
+    const args = [
+        '-map',
+        '0:v:0',
+        '-vf',
+        PROXY_SCALE,
+        ...proxyEncoder(tools),
+        '-g',
+        '30',
+        '-pix_fmt',
+        'yuv420p',
+    ]
+    if (asset.audioCodec)
+        args.push('-map', '0:a:0', '-c:a', 'aac', '-b:a', '96k')
+    args.push('-movflags', '+faststart', PROXY_FILE)
+    args.push(
+        '-map',
+        '0:v:0',
+        '-vf',
+        `fps=${num(thumbFps(asset.duration), 5)},scale=-2:${THUMB_HEIGHT}`,
+        '-q:v',
+        '5',
+        join(THUMBS_DIR, '%04d.jpg'),
+    )
+    return args
+}
+
 export function ingestArgs(
     tools: FfmpegTools,
     asset: MediaAsset,
     threads: number,
 ): string[]
 {
-    const fps = thumbFps(asset.duration)
     const args = [
         '-hide_banner',
         '-y',
@@ -67,44 +152,13 @@ export function ingestArgs(
         '-threads',
         String(threads),
     ]
-    if (tools.caps.hwaccel) args.push('-hwaccel', tools.caps.hwaccel)
+    if (tools.caps.hwaccel && asset.kind === 'video')
+        args.push('-hwaccel', tools.caps.hwaccel)
     args.push('-i', asset.path)
-    // Высота тоже приводится к чётной: yuv420p не принимает нечётные размеры.
-    args.push(
-        '-map',
-        '0:v:0',
-        '-vf',
-        `scale=-2:'2*trunc(min(${PROXY_HEIGHT},ih)/2)'`,
-        ...proxyEncoder(tools),
-        '-g',
-        '30',
-        '-pix_fmt',
-        'yuv420p',
-    )
-    if (asset.audioCodec)
-        args.push('-map', '0:a:0', '-c:a', 'aac', '-b:a', '96k')
-    args.push('-movflags', '+faststart', PROXY_FILE)
-    args.push(
-        '-map',
-        '0:v:0',
-        '-vf',
-        `fps=${num(fps, 5)},scale=-2:${THUMB_HEIGHT}`,
-        '-q:v',
-        '5',
-        join(THUMBS_DIR, '%04d.jpg'),
-    )
-    if (asset.audioCodec)
-        args.push(
-            '-map',
-            '0:a:0',
-            '-ac',
-            '1',
-            '-ar',
-            String(PCM_RATE),
-            '-f',
-            's16le',
-            PCM_FILE,
-        )
+    if (asset.kind === 'image') return [...args, ...imageArgs()]
+    if (asset.kind === 'audio') return [...args, ...soundArgs(), ...pcmArgs()]
+    args.push(...videoArgs(tools, asset))
+    if (asset.audioCodec) args.push(...pcmArgs())
     return args
 }
 
@@ -118,6 +172,12 @@ async function readPeaks(dir: string, allowNative: boolean): Promise<number[]>
     const peaks = computePeaks(samples, bucket, allowNative)
     await file.delete()
     return Array.from(peaks)
+}
+
+async function countThumbs(dir: string): Promise<number>
+{
+    const files = await readdir(join(dir, THUMBS_DIR)).catch(() => [])
+    return files.filter((f) => f.endsWith('.jpg')).length
 }
 
 export async function ingest(
@@ -142,13 +202,24 @@ export async function ingest(
                     : 0,
             ),
     })
-    const proxyInfo = await probe(tools.ffprobe, join(cacheDir, PROXY_FILE))
-    const thumbFiles = (await readdir(join(cacheDir, THUMBS_DIR))).filter((f) =>
-        f.endsWith('.jpg'),
-    )
+    const peaks = await readPeaks(cacheDir, allowNative)
+    if (asset.kind === 'audio')
+    {
+        return {
+            proxy: { width: 0, height: 0 },
+            thumbs: { count: 0, fps: 1 },
+            peaks,
+        }
+    }
+    const { name } = mediaFile(asset.kind)
+    const info = await probe(tools.ffprobe, join(cacheDir, name))
     return {
-        proxy: { width: proxyInfo.width, height: proxyInfo.height },
-        thumbs: { count: thumbFiles.length, fps: thumbFps(asset.duration) },
-        peaks: await readPeaks(cacheDir, allowNative),
+        proxy: { width: info.width, height: info.height },
+        thumbs:
+        {
+            count: await countThumbs(cacheDir),
+            fps: asset.kind === 'image' ? 1 : thumbFps(asset.duration),
+        },
+        peaks,
     }
 }

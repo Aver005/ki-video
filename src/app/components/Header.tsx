@@ -37,7 +37,7 @@ export function Header()
             <button
                 className="btn btn--primary"
                 onClick={() => setTab('export')}
-                disabled={!project || project.clips.length === 0}
+                disabled={!project || duration === 0}
             >
                 {running
                     ? `Экспорт ${Math.round((exportJob?.percent ?? 0) * 100)}%`

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { getPlayer } from '@app/hooks/usePlayer'
 import { useStore } from '@app/store/store'
-import { currentClip, setFrame } from '@app/store/actions'
+import { currentContent, setFrame } from '@app/store/actions'
 import { frameToRegion } from '@shared/frame'
 
 const CANVAS_HEIGHT = 960
@@ -23,7 +23,7 @@ function useFrameGestures(
         let wheelTimer: ReturnType<typeof setTimeout> | null = null
         const sourcePerPixel = () =>
         {
-            const current = currentClip()
+            const current = currentContent()
             if (!current) return 0
             const region = frameToRegion(current.frame, current.asset,
             {
@@ -34,7 +34,7 @@ function useFrameGestures(
         }
         const down = (e: PointerEvent) =>
         {
-            if (!currentClip()) return
+            if (!currentContent()) return
             dragging = true
             last = { x: e.clientX, y: e.clientY }
             canvas.setPointerCapture(e.pointerId)
@@ -43,7 +43,7 @@ function useFrameGestures(
         {
             if (!dragging) return
             const k = sourcePerPixel()
-            const current = currentClip()
+            const current = currentContent()
             if (!current) return
             setFrame(
                 {
@@ -58,18 +58,18 @@ function useFrameGestures(
         {
             if (!dragging) return
             dragging = false
-            if (currentClip()) setFrame({}, true)
+            if (currentContent()) setFrame({}, true)
         }
         const wheel = (e: WheelEvent) =>
         {
-            const current = currentClip()
+            const current = currentContent()
             if (!current) return
             e.preventDefault()
             const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP
             setFrame({ zoom: current.frame.zoom * factor }, false)
             if (wheelTimer) clearTimeout(wheelTimer)
             wheelTimer = setTimeout(
-                () => currentClip() && setFrame({}, true),
+                () => currentContent() && setFrame({}, true),
                 WHEEL_SETTLE_MS,
             )
         }
@@ -94,7 +94,9 @@ export function Preview()
 {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const output = useStore((s) => s.project?.output)
-    const hasClips = useStore((s) => (s.project?.clips.length ?? 0) > 0)
+    const hasClips = useStore((s) =>
+        s.project ? s.project.tracks.some((t) => t.items.length > 0) : false,
+    )
     const width = output
         ? Math.round((CANVAS_HEIGHT * output.width) / output.height)
         : 540

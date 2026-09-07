@@ -6,7 +6,7 @@ export interface ProbeResult
     width: number
     height: number
     fps: number
-    videoCodec: string
+    videoCodec: string | null
     audioCodec: string | null
 }
 
@@ -36,18 +36,20 @@ export function parseRate(rate: string | undefined): number
 
 export function toProbeResult(json: ProbeJson): ProbeResult
 {
-    const video = json.streams?.find((s) => s.codec_type === 'video')
+    const video = json.streams?.find(
+        (s) => s.codec_type === 'video' && s.width && s.height,
+    )
     const audio = json.streams?.find((s) => s.codec_type === 'audio')
-    if (!video || !video.width || !video.height)
-        throw new Error('В файле нет видеодорожки')
+    if (!video && !audio)
+        throw new Error('В файле нет ни видеодорожки, ни звука')
     const fps =
-        parseRate(video.avg_frame_rate) || parseRate(video.r_frame_rate) || 30
+        parseRate(video?.avg_frame_rate) || parseRate(video?.r_frame_rate) || 30
     return {
         duration: Number(json.format?.duration ?? '0') || 0,
-        width: video.width,
-        height: video.height,
+        width: video?.width ?? 0,
+        height: video?.height ?? 0,
         fps: Math.round(fps * 1000) / 1000,
-        videoCodec: video.codec_name ?? 'unknown',
+        videoCodec: video ? (video.codec_name ?? 'unknown') : null,
         audioCodec: audio?.codec_name ?? null,
     }
 }

@@ -1,5 +1,6 @@
 import { thumbUrl } from '@app/api'
-import { addClipFromAsset, removeAsset } from '@app/store/actions'
+import { addAssetToTimeline, removeAsset } from '@app/store/actions'
+import { ASSET_DRAG_TYPE } from '@app/components/TrackLane'
 import { formatTime } from '@shared/math'
 import type { MediaAsset } from '@shared/model'
 
@@ -9,6 +10,22 @@ interface AssetCardProps
     progress: number
 }
 
+const KIND_LABEL: Record<MediaAsset['kind'], string> =
+{
+    video: 'видео',
+    image: 'картинка',
+    audio: 'звук',
+}
+
+function details(asset: MediaAsset): string
+{
+    if (asset.kind === 'image')
+        return `картинка · ${asset.width}×${asset.height}`
+    if (asset.kind === 'audio')
+        return `звук · ${formatTime(asset.duration, false)} · ${asset.audioCodec ?? '—'}`
+    return `${formatTime(asset.duration, false)} · ${asset.width}×${asset.height} · ${asset.videoCodec ?? '—'}`
+}
+
 export function AssetCard({ asset, progress }: AssetCardProps)
 {
     const ready = asset.status === 'ready'
@@ -16,16 +33,24 @@ export function AssetCard({ asset, progress }: AssetCardProps)
         <div
             className={`asset ${ready ? '' : 'asset--busy'}`}
             title={asset.path}
+            draggable={ready}
+            onDragStart={(e) =>
+            {
+                e.dataTransfer.setData(ASSET_DRAG_TYPE, asset.id)
+                e.dataTransfer.effectAllowed = 'copy'
+            }}
         >
             <div className="asset__thumb">
-                {ready && <img src={thumbUrl(asset.id, 1)} alt="" />}
+                {ready && asset.kind !== 'audio' && (
+                    <img src={thumbUrl(asset.id, 1)} alt="" />
+                )}
+                {asset.kind === 'audio' && (
+                    <span className="asset__kind">♪</span>
+                )}
             </div>
             <div className="asset__body">
                 <div className="asset__name">{asset.name}</div>
-                <div className="muted">
-                    {formatTime(asset.duration, false)} · {asset.width}×
-                    {asset.height} · {asset.videoCodec}
-                </div>
+                <div className="muted">{details(asset)}</div>
                 {asset.status === 'processing' && (
                     <div className="progress">
                         <div
@@ -42,8 +67,8 @@ export function AssetCard({ asset, progress }: AssetCardProps)
                 <button
                     className="btn btn--small"
                     disabled={!ready}
-                    onClick={() => addClipFromAsset(asset)}
-                    title="На таймлайн"
+                    onClick={() => addAssetToTimeline(asset)}
+                    title={`На таймлайн (${KIND_LABEL[asset.kind]}); можно и перетащить на дорожку`}
                     aria-label="Добавить на таймлайн"
                 >
                     +

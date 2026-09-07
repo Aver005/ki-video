@@ -74,7 +74,7 @@ export function MediaBin()
             <div className="bin__list">
                 {list.length === 0 && (
                     <div className="muted bin__empty">
-                        Добавь ShadowPlay-клипы, чтобы начать
+                        Добавь видео, картинки или музыку
                     </div>
                 )}
                 {list.map((asset) => (

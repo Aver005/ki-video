@@ -1,8 +1,14 @@
-// Модель проекта. Общая для сервера и интерфейса: одна математика для превью и экспорта.
+// Модель проекта: дорожки и элементы на общей шкале времени. Общая для сервера и интерфейса.
 
 export type Id = string
 
 export type VideoCodec = 'h264' | 'hevc'
+
+/** Что за файл: видео, картинка или только звук. */
+export type MediaKind = 'video' | 'image' | 'audio'
+
+/** Содержимое — базовая дорожка кадра, наложения рисуются поверх, звук только слышен. */
+export type TrackKind = 'content' | 'overlay' | 'audio'
 
 export interface OutputSpec
 {
@@ -17,7 +23,7 @@ export interface OutputSpec
 /** Ключевой кадр окна кадрирования: центр в пикселях исходника и зум (>= 1). */
 export interface FrameKeyframe
 {
-    /** Секунды от начала клипа. */
+    /** Секунды от начала элемента. */
     t: number
     cx: number
     cy: number
@@ -26,15 +32,82 @@ export interface FrameKeyframe
 
 export type FrameState = Omit<FrameKeyframe, 't'>
 
-export interface Clip
+/** Геометрия наложения: центр и ширина в долях кадра, поворот в градусах. */
+export interface OverlayBox
+{
+    x: number
+    y: number
+    width: number
+    rotation: number
+    /** 0..1 */
+    opacity: number
+}
+
+export type TransitionKind =
+    | 'fade'
+    | 'dissolve'
+    | 'wipeleft'
+    | 'wiperight'
+    | 'wipeup'
+    | 'wipedown'
+    | 'slideleft'
+    | 'slideright'
+    | 'circleopen'
+
+export type TextAnimation = 'none' | 'fade' | 'pop'
+
+export interface ItemBase
 {
     id: Id
+    /** Начало на таймлайне проекта, сек. */
+    start: number
+    /** Длительность на таймлайне, сек. */
+    duration: number
+}
+
+export interface MediaItem extends ItemBase
+{
+    kind: 'media'
     assetId: Id
-    /** Секунды внутри исходного файла. */
-    in: number
-    out: number
-    /** Отсортированы по t. Пустой список — окно по центру без зума. */
+    /** Смещение внутри исходного файла, сек. У картинки всегда 0. */
+    offset: number
+    /** Кадрирование, когда элемент лежит на дорожке содержимого. */
     frame: FrameKeyframe[]
+    /** Геометрия, когда элемент лежит на дорожке наложений. */
+    box: OverlayBox
+    /** Громкость 0..2. */
+    volume: number
+    fadeIn: number
+    fadeOut: number
+    /** Переход при наезде на предыдущий элемент дорожки содержимого. */
+    transition: TransitionKind
+}
+
+export interface TextItem extends ItemBase
+{
+    kind: 'text'
+    text: string
+    /** Позиция центра, доли ширины и высоты кадра. */
+    x: number
+    y: number
+    /** Кегль в пикселях кадра экспорта. */
+    size: number
+    color: string
+    outline: string
+    animation: TextAnimation
+}
+
+export type Item = MediaItem | TextItem
+
+export interface Track
+{
+    id: Id
+    kind: TrackKind
+    name: string
+    /** Скрытая дорожка не идёт ни в превью, ни в экспорт. */
+    hidden: boolean
+    muted: boolean
+    items: Item[]
 }
 
 export interface ColorGrade
@@ -63,24 +136,6 @@ export interface AudioChain
     loudness: number
 }
 
-export type TextAnimation = 'none' | 'fade' | 'pop'
-
-export interface TextLayer
-{
-    id: Id
-    text: string
-    start: number
-    end: number
-    /** Позиция центра, доли от ширины/высоты кадра, 0..1. */
-    x: number
-    y: number
-    /** Кегль в пикселях кадра экспорта. */
-    size: number
-    color: string
-    outline: string
-    animation: TextAnimation
-}
-
 export interface SubtitleCue
 {
     id: Id
@@ -101,14 +156,13 @@ export interface Subtitles
 
 export interface Project
 {
-    version: 1
+    version: 2
     id: Id
     name: string
     output: OutputSpec
-    clips: Clip[]
+    tracks: Track[]
     color: ColorGrade
     audio: AudioChain
-    texts: TextLayer[]
     subtitles: Subtitles
 }
 
@@ -117,17 +171,19 @@ export type AssetStatus = 'processing' | 'ready' | 'error'
 export interface MediaAsset
 {
     id: Id
+    kind: MediaKind
     name: string
     path: string
+    /** Для картинки 0: длительность задаёт элемент на таймлайне. */
     duration: number
     width: number
     height: number
     fps: number
-    videoCodec: string
+    videoCodec: string | null
     audioCodec: string | null
     status: AssetStatus
     error?: string
-    /** Размер прокси-видео, чтобы пересчитывать координаты окна. */
+    /** Размер уменьшенной копии, чтобы пересчитывать координаты окна. */
     proxy?: { width: number; height: number }
     thumbs?: { count: number; fps: number }
     /** Пики громкости 0..255, PEAKS_PER_SECOND значений в секунду. */
@@ -135,6 +191,13 @@ export interface MediaAsset
 }
 
 export const PEAKS_PER_SECOND = 50
+
+/** Короче этого элементы не режутся и не тянутся. */
+export const MIN_ITEM_SECONDS = 0.1
+
+/** Сколько длится картинка, когда её кладут на таймлайн, и до скольких её можно растянуть. */
+export const IMAGE_SECONDS = 5
+export const IMAGE_MAX_SECONDS = 3600
 
 export const DEFAULT_OUTPUT: OutputSpec =
 {
@@ -163,17 +226,56 @@ export const SILENT_AUDIO: AudioChain =
     loudness: 0,
 }
 
+export const DEFAULT_BOX: OverlayBox =
+{
+    x: 0.5,
+    y: 0.5,
+    width: 0.4,
+    rotation: 0,
+    opacity: 1,
+}
+
+export function isMediaItem(item: Item): item is MediaItem
+{
+    return item.kind === 'media'
+}
+
+export function isTextItem(item: Item): item is TextItem
+{
+    return item.kind === 'text'
+}
+
+export function itemEnd(item: Item): number
+{
+    return item.start + item.duration
+}
+
+export function createTrack(kind: TrackKind, name: string): Track
+{
+    return {
+        id: crypto.randomUUID(),
+        kind,
+        name,
+        hidden: false,
+        muted: false,
+        items: [],
+    }
+}
+
 export function createProject(id: Id, name = 'Без названия'): Project
 {
     return {
-        version: 1,
+        version: 2,
         id,
         name,
         output: { ...DEFAULT_OUTPUT },
-        clips: [],
+        tracks: [
+            createTrack('content', 'Содержимое'),
+            createTrack('overlay', 'Наложения'),
+            createTrack('audio', 'Звук'),
+        ],
         color: { ...NEUTRAL_COLOR },
         audio: { ...SILENT_AUDIO },
-        texts: [],
         subtitles: { preset: 'bold', y: 0.8, cues: [] },
     }
 }

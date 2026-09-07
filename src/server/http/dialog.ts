@@ -1,14 +1,14 @@
 // Системный диалог выбора файлов: на Windows через PowerShell без сторонних пакетов.
 
-import { VIDEO_EXTENSIONS } from '@shared/api'
+import { MEDIA_EXTENSIONS } from '@shared/api'
 
 const SCRIPT = [
     '[Console]::OutputEncoding = [Text.Encoding]::UTF8',
     'Add-Type -AssemblyName System.Windows.Forms',
     '$d = New-Object System.Windows.Forms.OpenFileDialog',
     '$d.Multiselect = $true',
-    `$d.Filter = 'Видео|${VIDEO_EXTENSIONS.map((e) => `*${e}`).join(';')}|Все файлы|*.*'`,
-    "$d.Title = 'Добавить видео'",
+    `$d.Filter = 'Медиафайлы|${MEDIA_EXTENSIONS.map((e) => `*${e}`).join(';')}|Все файлы|*.*'`,
+    "$d.Title = 'Добавить видео, картинки или звук'",
     "if ($d.ShowDialog() -eq 'OK') { $d.FileNames | ForEach-Object { [Console]::Out.WriteLine($_) } }",
 ].join('; ')
 

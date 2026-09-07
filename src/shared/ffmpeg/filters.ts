@@ -1,12 +1,13 @@
-// Фильтры ffmpeg для одного клипа и для итоговой дорожки. Только чистые функции.
+// Фильтры ffmpeg для элементов таймлайна и для итоговых дорожек. Только чистые функции.
 
 import type {
     AudioChain,
-    Clip,
     ColorGrade,
     FrameKeyframe,
     MediaAsset,
+    MediaItem,
     OutputSpec,
+    OverlayBox,
 } from '@shared/model'
 import { NEUTRAL_COLOR } from '@shared/model'
 import { baseWindow, defaultFrame, MAX_ZOOM } from '@shared/frame'
@@ -23,7 +24,7 @@ function points(
 
 /** Цепочка кадрирования: crop с панорамой по t → scale → zoompan для зума. */
 export function frameFilters(
-    clip: Clip,
+    item: MediaItem,
     asset: MediaAsset,
     output: OutputSpec,
 ): string[]
@@ -31,7 +32,7 @@ export function frameFilters(
     const source = { width: asset.width, height: asset.height }
     const { width: bw, height: bh } = baseWindow(source, output)
     const keyframes =
-        clip.frame.length > 0 ? clip.frame : [{ t: 0, ...defaultFrame(source) }]
+        item.frame.length > 0 ? item.frame : [{ t: 0, ...defaultFrame(source) }]
 
     const cx = piecewiseLinear(
         points(keyframes, (k) => k.cx),
@@ -81,6 +82,106 @@ export function frameFilters(
             `zoompan=z='${zoom}':x='${zx}':y='${zy}':d=1:s=${output.width}x${output.height}:fps=${output.fps}`,
         )
     }
+    return filters
+}
+
+function evenRound(value: number): number
+{
+    return Math.max(2, Math.round(value / 2) * 2)
+}
+
+export interface OverlayPlacement
+{
+    filters: string[]
+    /** Левый верхний угол наложения в пикселях кадра. */
+    x: number
+    y: number
+}
+
+/** Размер наложения в пикселях кадра: ширина из доли, высота по пропорциям источника. */
+export function overlaySize(
+    box: OverlayBox,
+    asset: Pick<MediaAsset, 'width' | 'height'>,
+    output: OutputSpec,
+): { width: number; height: number }
+{
+    const width = evenRound(box.width * output.width)
+    const ratio = asset.width > 0 ? asset.height / asset.width : 1
+    return { width, height: evenRound(width * ratio) }
+}
+
+/** Габарит после поворота: описанный прямоугольник. */
+export function rotatedSize(
+    size: { width: number; height: number },
+    degrees: number,
+): { width: number; height: number }
+{
+    const a = (degrees * Math.PI) / 180
+    const cos = Math.abs(Math.cos(a))
+    const sin = Math.abs(Math.sin(a))
+    return {
+        width: Math.round(size.width * cos + size.height * sin),
+        height: Math.round(size.width * sin + size.height * cos),
+    }
+}
+
+/** Цепочка наложения: масштаб, поворот с прозрачным фоном, непрозрачность, фейды, сдвиг во времени. */
+export function overlayFilters(
+    item: MediaItem,
+    asset: MediaAsset,
+    output: OutputSpec,
+): OverlayPlacement
+{
+    const box = item.box
+    const size = overlaySize(box, asset, output)
+    const filters = [
+        `fps=${output.fps}`,
+        `scale=${size.width}:${size.height}:flags=bicubic`,
+        'format=yuva420p',
+    ]
+    if (Math.abs(box.rotation) > 0.01)
+    {
+        const a = num((box.rotation * Math.PI) / 180, 5)
+        filters.push(`rotate=${a}:c=none:ow=rotw(${a}):oh=roth(${a})`)
+    }
+    if (box.opacity < 0.999)
+        filters.push(`colorchannelmixer=aa=${num(box.opacity)}`)
+    if (item.fadeIn > 0.01)
+        filters.push(`fade=t=in:st=0:d=${num(item.fadeIn, 3)}:alpha=1`)
+    if (item.fadeOut > 0.01)
+    {
+        const at = Math.max(0, item.duration - item.fadeOut)
+        filters.push(
+            `fade=t=out:st=${num(at, 3)}:d=${num(item.fadeOut, 3)}:alpha=1`,
+        )
+    }
+    filters.push(`setpts=PTS-STARTPTS+${num(item.start, 3)}/TB`)
+    const outer = rotatedSize(size, box.rotation)
+    return {
+        filters,
+        x: Math.round(box.x * output.width - outer.width / 2),
+        y: Math.round(box.y * output.height - outer.height / 2),
+    }
+}
+
+/** Звук одного элемента: громкость, фейды, сдвиг к своему месту на таймлайне. */
+export function itemAudioFilters(
+    item: MediaItem,
+    fadeIn: number,
+    fadeOut: number,
+): string[]
+{
+    const filters = [AUDIO_FORMAT]
+    if (Math.abs(item.volume - 1) > 0.001)
+        filters.push(`volume=${num(item.volume)}`)
+    if (fadeIn > 0.01) filters.push(`afade=t=in:st=0:d=${num(fadeIn, 3)}`)
+    if (fadeOut > 0.01)
+    {
+        const at = Math.max(0, item.duration - fadeOut)
+        filters.push(`afade=t=out:st=${num(at, 3)}:d=${num(fadeOut, 3)}`)
+    }
+    const delay = Math.round(item.start * 1000)
+    if (delay > 0) filters.push(`adelay=${delay}:all=1`)
     return filters
 }
 

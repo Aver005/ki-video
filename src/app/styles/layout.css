@@ -78,6 +78,7 @@
 .app__inspector {
     grid-area: inspector;
     border-left: 1px solid var(--line);
+    position: relative;
 }
 .app__stage {
     grid-area: stage;
@@ -90,6 +91,7 @@
     border-top: 1px solid var(--line);
     background: var(--bg-2);
     min-height: 0;
+    position: relative;
 }
 
 /* Кнопки */
@@ -225,6 +227,14 @@ textarea {
     background: #000;
     border-radius: 4px;
     overflow: hidden;
+}
+.asset__kind {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    font-size: 18px;
 }
 .asset__thumb img {
     width: 100%;
@@ -452,7 +462,7 @@ input[type='range'] {
     gap: 6px;
 }
 
-/* Таймлайн */
+/* Таймлайн: дорожки с закреплёнными заголовками */
 .timeline {
     height: 100%;
     overflow: auto;
@@ -461,14 +471,71 @@ input[type='range'] {
 .timeline__inner {
     position: relative;
     min-width: 100%;
-    height: 100%;
+}
+.lane {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--line);
+}
+.lane--ruler {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--bg-2);
+    height: 30px;
+}
+.lane__head {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    width: 132px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 6px;
+    background: var(--bg-2);
+    border-right: 1px solid var(--line);
+}
+.lane--ruler .lane__head {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+.lane__name {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lane__buttons {
+    display: flex;
+    gap: 2px;
+}
+.btn--off {
+    opacity: 0.5;
+}
+.lane__body {
+    position: relative;
+    flex: none;
+}
+.lane__body--content {
+    background: rgba(91, 140, 255, 0.05);
+}
+.lane__body--audio {
+    background: rgba(62, 207, 142, 0.05);
+}
+.lane__body--hidden {
+    opacity: 0.35;
 }
 .ruler {
-    height: 22px;
     position: relative;
-    border-bottom: 1px solid var(--line);
+    height: 100%;
     cursor: pointer;
     user-select: none;
+    flex: none;
 }
 .ruler__tick {
     position: absolute;
@@ -480,75 +547,56 @@ input[type='range'] {
     color: var(--muted);
     font-family: var(--mono);
 }
-.track {
-    position: relative;
-    border-bottom: 1px solid var(--line);
-}
-.track--text,
-.track--subs {
-    height: 26px;
-}
-.track--video {
-    height: 100px;
-}
-.block {
-    position: absolute;
-    top: 3px;
-    height: 20px;
-    border-radius: 4px;
-    padding: 0 6px;
-    font-size: 11px;
-    line-height: 20px;
-    white-space: nowrap;
-    overflow: hidden;
-    cursor: grab;
-    user-select: none;
-}
-.block--text {
-    background: rgba(255, 207, 92, 0.25);
-    border: 1px solid rgba(255, 207, 92, 0.6);
-}
-.block--sub {
-    background: rgba(62, 207, 142, 0.2);
-    border: 1px solid rgba(62, 207, 142, 0.5);
-}
-.block--selected {
-    outline: 1px solid #fff;
-}
 
-.clip {
+.item {
     position: absolute;
-    top: 6px;
-    height: 88px;
-    border-radius: 6px;
+    top: 4px;
+    border-radius: 5px;
     overflow: hidden;
     border: 1px solid var(--line);
     background: var(--bg-3);
-    cursor: pointer;
+    cursor: grab;
     user-select: none;
 }
-.clip--selected {
+.item--selected {
     border-color: var(--accent);
     box-shadow: 0 0 0 1px var(--accent);
 }
-.clip__thumbs {
+.item--text {
+    background: rgba(255, 207, 92, 0.22);
+    border-color: rgba(255, 207, 92, 0.55);
+}
+.item--cue {
+    background: rgba(62, 207, 142, 0.2);
+    border-color: rgba(62, 207, 142, 0.5);
+}
+.item__thumbs {
     display: flex;
     height: 54px;
     overflow: hidden;
 }
-.clip__thumbs img {
+.item__thumbs img {
     height: 100%;
     object-fit: cover;
     flex: none;
     pointer-events: none;
 }
-.waveform {
-    display: block;
-    background: rgba(0, 0, 0, 0.35);
-}
-.clip__keys {
+.item__label {
     position: absolute;
-    bottom: 2px;
+    left: 6px;
+    right: 6px;
+    bottom: 1px;
+    font-size: 11px;
+    line-height: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+}
+.item__keys {
+    position: absolute;
+    top: 2px;
     left: 0;
     right: 0;
     height: 10px;
@@ -561,21 +609,25 @@ input[type='range'] {
     background: var(--key);
     transform: translateX(-4px) rotate(45deg);
 }
-.clip__handle {
+.item__handle {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 8px;
     cursor: ew-resize;
 }
-.clip__handle--l {
+.item__handle--l {
     left: 0;
 }
-.clip__handle--r {
+.item__handle--r {
     right: 0;
 }
-.clip__handle:hover {
+.item__handle:hover {
     background: rgba(91, 140, 255, 0.5);
+}
+.waveform {
+    display: block;
+    background: rgba(0, 0, 0, 0.3);
 }
 .playhead {
     position: absolute;
@@ -593,6 +645,30 @@ input[type='range'] {
     left: -5px;
     border: 5px solid transparent;
     border-top: 7px solid #fff;
+}
+
+/* Границы панелей */
+.splitter {
+    position: absolute;
+    z-index: 5;
+    transition: background 0.12s ease;
+}
+.splitter--x {
+    left: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+}
+.splitter--y {
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: row-resize;
+}
+.splitter:hover {
+    background: var(--accent);
 }
 
 /* Модалка */
@@ -635,7 +711,7 @@ input[type='range'] {
 .notice {
     position: fixed;
     left: 50%;
-    bottom: 236px;
+    bottom: 16px;
     transform: translateX(-50%);
     background: var(--bg-3);
     border: 1px solid var(--line);

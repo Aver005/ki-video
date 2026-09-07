@@ -3,7 +3,7 @@
 import { readdir, stat } from 'node:fs/promises'
 import { dirname, extname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
-import { VIDEO_EXTENSIONS, type FsEntry, type FsListing } from '@shared/api'
+import { MEDIA_EXTENSIONS, type FsEntry, type FsListing } from '@shared/api'
 
 export function defaultDir(): string
 {
@@ -26,7 +26,7 @@ export async function listDir(dir: string): Promise<FsListing>
         }
         if (
             !entry.isFile() ||
-            !VIDEO_EXTENSIONS.includes(extname(entry.name).toLowerCase())
+            !MEDIA_EXTENSIONS.includes(extname(entry.name).toLowerCase())
         )
             continue
         const info = await stat(path).catch(() => null)

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { computePeaks, peaksTs } from '@server/peaks'
 import { parseRange } from '@server/http/range'
 import { parseProgressBlock } from '@server/ffmpeg/run'
-import { isProjectLike } from '@server/project'
+import { parseProject } from '@server/project'
 import { isOwnRequest } from '@server/http/guard'
 import { assetIdFor } from '@server/assets'
 import { toProbeResult } from '@server/ffmpeg/probe'
@@ -55,13 +55,74 @@ describe('progress', () =>
 
 describe('project validation', () =>
 {
-    test('новый проект проходит, обрезанный — нет', () =>
+    test('новый проект проходит, чужой объект — нет', () =>
     {
-        expect(isProjectLike(createProject('p'))).toBe(true)
-        expect(isProjectLike({ version: 1, clips: [] })).toBe(false)
-        expect(isProjectLike({ ...createProject('p'), output: null })).toBe(
-            false,
-        )
+        expect(parseProject(createProject('p'))?.version).toBe(2)
+        expect(parseProject({ hello: 1 })).toBeNull()
+        expect(parseProject(null)).toBeNull()
+    })
+    test('битые поля заменяются значениями по умолчанию', () =>
+    {
+        const parsed = parseProject(
+        {
+            ...createProject('p'),
+            output: null,
+            color: 'нет',
+        })
+        expect(parsed?.output.width).toBe(1080)
+        expect(parsed?.color.contrast).toBe(1)
+    })
+    test('проект версии 1 переносится на дорожки', () =>
+    {
+        const parsed = parseProject(
+        {
+            version: 1,
+            id: 'old',
+            name: 'Старый',
+            output:
+            {
+                width: 720,
+                height: 1280,
+                fps: 30,
+                codec: 'h264',
+                quality: 20,
+            },
+            clips: [
+                { id: 'c1', assetId: 'a1', in: 2, out: 5, frame: [] },
+                { id: 'c2', assetId: 'a1', in: 0, out: 4, frame: [] },
+            ],
+            texts: [
+                {
+                    id: 't1',
+                    text: 'Привет',
+                    start: 1,
+                    end: 3,
+                    x: 0.5,
+                    y: 0.2,
+                    size: 64,
+                    color: '#fff',
+                    outline: '#000',
+                    animation: 'fade',
+                },
+            ],
+            color: {},
+            audio: {},
+            subtitles: { preset: 'bold', y: 0.8, cues: [] },
+        })
+        expect(parsed?.version).toBe(2)
+        const content = parsed?.tracks.find((t) => t.kind === 'content')
+        expect(content?.items.map((i) => [i.start, i.duration])).toEqual([
+            [0, 3],
+            [3, 4],
+        ])
+        expect(content?.items[1]).toMatchObject({ offset: 0 })
+        const overlay = parsed?.tracks.find((t) => t.kind === 'overlay')
+        expect(overlay?.items[0]).toMatchObject(
+        {
+            kind: 'text',
+            start: 1,
+            duration: 2,
+        })
     })
 })
 
@@ -116,6 +177,24 @@ describe('assets and probe', () =>
         const id = assetIdFor('E:/a.mp4', 10, 1000.7)
         expect(id).toMatch(/^[0-9a-f]{16}$/)
         expect(assetIdFor('E:/a.mp4', 10, 1000.2)).toBe(id)
+    })
+    test('probe: файл только со звуком не считается битым', () =>
+    {
+        const r = toProbeResult(
+        {
+            streams: [{ codec_type: 'audio', codec_name: 'mp3' }],
+            format: { duration: '61' },
+        })
+        expect(r).toEqual(
+        {
+            duration: 61,
+            width: 0,
+            height: 0,
+            fps: 30,
+            videoCodec: null,
+            audioCodec: 'mp3',
+        })
+        expect(() => toProbeResult({ streams: [] })).toThrow()
     })
     test('probe: fps из дроби, звук может отсутствовать', () =>
     {

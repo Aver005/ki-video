@@ -1,13 +1,29 @@
 // Сборка аргументов ffmpeg для экспорта проекта. Чистая функция: удобно тестировать.
 
-import type { MediaAsset, Project, VideoCodec } from '@shared/model'
-import { clipDuration } from '@shared/timeline'
+import type {
+    MediaAsset,
+    MediaItem,
+    OutputSpec,
+    Project,
+    Track,
+    VideoCodec,
+} from '@shared/model'
+import { isMediaItem } from '@shared/model'
+import {
+    contentSegments,
+    projectDuration,
+    sortedItems,
+    TIME_EPSILON,
+    type ContentSegment,
+} from '@shared/timeline'
 import {
     AUDIO_FORMAT,
     VIDEO_FORMAT,
     audioFilters,
     colorFilters,
     frameFilters,
+    itemAudioFilters,
+    overlayFilters,
 } from '@shared/ffmpeg/filters'
 import { num } from '@shared/math'
 
@@ -27,6 +43,9 @@ export const SOFTWARE_CAPS: EncoderCaps =
 
 /** Имя файла с графом в рабочей папке задания: командная строка Windows ограничена 32 767 символами. */
 export const GRAPH_FILE = 'graph.txt'
+
+/** Чтение значения из файла: `-filter_complex_script` убрали в ffmpeg 9, эта запись работает с 7.0. */
+export const GRAPH_OPTION = '-/filter_complex'
 
 export interface ExportPlan
 {
@@ -77,6 +96,259 @@ function encoderArgs(
     return ['-c:v', encoder, '-preset', 'veryfast', '-crf', String(quality)]
 }
 
+function inputArgs(
+    item: MediaItem,
+    asset: MediaAsset,
+    caps: EncoderCaps,
+    output: OutputSpec,
+): string[]
+{
+    if (asset.kind === 'image')
+    {
+        return [
+            '-loop',
+            '1',
+            '-framerate',
+            String(output.fps),
+            '-t',
+            num(item.duration, 3),
+            '-i',
+            asset.path,
+        ]
+    }
+    const hwaccel =
+        caps.hwaccel && asset.kind === 'video' ? ['-hwaccel', caps.hwaccel] : []
+    return [
+        ...hwaccel,
+        '-ss',
+        num(item.offset, 3),
+        '-t',
+        num(item.duration, 3),
+        '-i',
+        asset.path,
+    ]
+}
+
+/** Переходы на дорожке содержимого дают и звуковой кроссфейд: наезд гасит один и вводит другой. */
+function crossfades(
+    segments: readonly ContentSegment[],
+): Map<string, { in: number; out: number }>
+{
+    const fades = new Map<string, { in: number; out: number }>()
+    const get = (id: string) =>
+        fades.get(id) ?? fades.set(id, { in: 0, out: 0 }).get(id)!
+    segments.forEach((segment, index) =>
+    {
+        if (segment.overlap <= TIME_EPSILON || !segment.item) return
+        get(segment.item.id).in = segment.overlap
+        const previous = segments[index - 1]?.item
+        if (previous) get(previous.id).out = segment.overlap
+    })
+    return fades
+}
+
+class GraphBuilder
+{
+    readonly inputs: string[] = []
+    readonly lines: string[] = []
+    readonly audioLabels: string[] = []
+    private inputCount = 0
+    private readonly indexes = new Map<string, number>()
+
+    constructor(
+        private readonly assets: ReadonlyMap<string, MediaAsset>,
+        private readonly caps: EncoderCaps,
+        private readonly output: OutputSpec,
+    )
+    {}
+
+    asset(item: MediaItem): MediaAsset
+    {
+        const asset = this.assets.get(item.assetId)
+        if (!asset) throw new ExportError(`Файл элемента не найден`)
+        if (asset.status !== 'ready')
+            throw new ExportError(`Файл ещё готовится: ${asset.name}`)
+        if (
+            asset.kind !== 'image' &&
+            item.offset + item.duration > asset.duration + 0.05
+        )
+            throw new ExportError(`Элемент длиннее исходника: ${asset.name}`)
+        return asset
+    }
+
+    /** Один вход ffmpeg на элемент: и картинка, и звук берутся из него. */
+    input(item: MediaItem, asset: MediaAsset): number
+    {
+        const known = this.indexes.get(item.id)
+        if (known !== undefined) return known
+        this.inputs.push(...inputArgs(item, asset, this.caps, this.output))
+        const index = this.inputCount
+        this.inputCount += 1
+        this.indexes.set(item.id, index)
+        return index
+    }
+
+    line(value: string): void
+    {
+        this.lines.push(value)
+    }
+
+    audio(
+        index: number,
+        item: MediaItem,
+        fadeIn: number,
+        fadeOut: number,
+    ): void
+    {
+        const label = `am${this.audioLabels.length}`
+        this.line(
+            `[${index}:a]${itemAudioFilters(item, fadeIn, fadeOut).join(',')}[${label}]`,
+        )
+        this.audioLabels.push(label)
+    }
+}
+
+/** Базовая лента: куски дорожки содержимого, зазоры чёрным, наезды через xfade. */
+function buildBase(
+    builder: GraphBuilder,
+    segments: readonly ContentSegment[],
+    output: OutputSpec,
+    fades: ReadonlyMap<string, { in: number; out: number }>,
+    muted: boolean,
+): string
+{
+    const labels:
+    {
+        label: string
+        duration: number
+        overlap: number
+        transition: string
+    }[] = []
+    segments.forEach((segment, i) =>
+    {
+        const label = `bs${i}`
+        if (!segment.item)
+        {
+            builder.line(
+                `color=c=black:s=${output.width}x${output.height}:r=${output.fps}:d=${num(segment.duration, 3)},${VIDEO_FORMAT}[${label}]`,
+            )
+        }
+        else
+        {
+            const item = segment.item
+            const asset = builder.asset(item)
+            const index = builder.input(item, asset)
+            const chain = [
+                ...frameFilters(item, asset, output),
+                VIDEO_FORMAT,
+                'setpts=PTS-STARTPTS',
+            ]
+            builder.line(`[${index}:v]${chain.join(',')}[${label}]`)
+            if (asset.audioCodec && !muted && item.volume > 0)
+            {
+                const fade = fades.get(item.id)
+                builder.audio(
+                    index,
+                    item,
+                    Math.max(item.fadeIn, fade?.in ?? 0),
+                    Math.max(item.fadeOut, fade?.out ?? 0),
+                )
+            }
+        }
+        labels.push(
+        {
+            label,
+            duration: segment.duration,
+            overlap: segment.overlap,
+            transition: segment.item?.transition ?? 'fade',
+        })
+    })
+
+    const first = labels[0]
+    if (!first) throw new ExportError('Нечего показывать')
+    let current = first.label
+    let covered = first.duration
+    for (let i = 1; i < labels.length; i += 1)
+    {
+        const next = labels[i]
+        if (!next) break
+        const label = `bx${i}`
+        if (next.overlap > TIME_EPSILON)
+        {
+            builder.line(
+                `[${current}][${next.label}]xfade=transition=${next.transition}:duration=${num(next.overlap, 3)}:offset=${num(covered - next.overlap, 3)}[${label}]`,
+            )
+            covered += next.duration - next.overlap
+        }
+        else
+        {
+            builder.line(
+                `[${current}][${next.label}]concat=n=2:v=1:a=0[${label}]`,
+            )
+            covered += next.duration
+        }
+        current = label
+    }
+    return current
+}
+
+/** Наложения поверх базы: каждое со своей геометрией, прозрачностью и окном показа. */
+function buildOverlays(
+    builder: GraphBuilder,
+    tracks: readonly Track[],
+    output: OutputSpec,
+    base: string,
+): string
+{
+    let current = base
+    let counter = 0
+    for (const track of tracks)
+    {
+        for (const item of sortedItems(track))
+        {
+            if (!isMediaItem(item)) continue
+            const asset = builder.asset(item)
+            const index = builder.input(item, asset)
+            if (asset.kind !== 'audio')
+            {
+                const placement = overlayFilters(item, asset, output)
+                const layer = `ov${counter}`
+                const next = `bo${counter}`
+                builder.line(
+                    `[${index}:v]${placement.filters.join(',')}[${layer}]`,
+                )
+                builder.line(
+                    `[${current}][${layer}]overlay=${placement.x}:${placement.y}:eof_action=pass:enable='between(t,${num(item.start, 3)},${num(item.start + item.duration, 3)})'[${next}]`,
+                )
+                current = next
+                counter += 1
+            }
+            if (asset.audioCodec && !track.muted && item.volume > 0)
+                builder.audio(index, item, item.fadeIn, item.fadeOut)
+        }
+    }
+    return current
+}
+
+function buildAudioTracks(
+    builder: GraphBuilder,
+    tracks: readonly Track[],
+): void
+{
+    for (const track of tracks)
+    {
+        if (track.muted) continue
+        for (const item of sortedItems(track))
+        {
+            if (!isMediaItem(item)) continue
+            const asset = builder.asset(item)
+            if (!asset.audioCodec || item.volume <= 0) continue
+            const index = builder.input(item, asset)
+            builder.audio(index, item, item.fadeIn, item.fadeOut)
+        }
+    }
+}
+
 export function buildExportPlan(
     project: Project,
     assets: ReadonlyMap<string, MediaAsset>,
@@ -85,56 +357,59 @@ export function buildExportPlan(
     assFile: string | null,
 ): ExportPlan
 {
-    if (project.clips.length === 0)
-        throw new ExportError('В проекте нет клипов')
-    const inputs: string[] = []
-    const graph: string[] = []
-    const labels: string[] = []
-    let duration = 0
+    const duration = projectDuration(project)
+    if (duration <= 0) throw new ExportError('В проекте нечего экспортировать')
+    const output = project.output
+    const visible = project.tracks.filter((track) => !track.hidden)
+    const content = visible.find((track) => track.kind === 'content')
+    const segments = contentSegments(content, duration)
+    const builder = new GraphBuilder(assets, caps, output)
 
-    project.clips.forEach((clip, i) =>
-    {
-        const asset = assets.get(clip.assetId)
-        if (!asset)
-            throw new ExportError(`Файл клипа не найден: ${clip.assetId}`)
-        const length = clipDuration(clip)
-        if (length <= 0) throw new ExportError(`Клип ${i + 1} нулевой длины`)
-        duration += length
-        if (caps.hwaccel) inputs.push('-hwaccel', caps.hwaccel)
-        inputs.push(
-            '-ss',
-            num(clip.in, 3),
-            '-t',
-            num(length, 3),
-            '-i',
-            asset.path,
-        )
-
-        const video = [
-            ...frameFilters(clip, asset, project.output),
-            ...colorFilters(project.color),
-            VIDEO_FORMAT,
-        ]
-        graph.push(`[${i}:v]${video.join(',')}[v${i}]`)
-        if (asset.audioCodec)
-        {
-            graph.push(`[${i}:a]${AUDIO_FORMAT}[a${i}]`)
-        }
-        else
-        {
-            graph.push(
-                `aevalsrc=0:d=${num(length, 3)}:s=48000:c=stereo,${AUDIO_FORMAT}[a${i}]`,
-            )
-        }
-        labels.push(`[v${i}][a${i}]`)
-    })
-
-    graph.push(
-        `${labels.join('')}concat=n=${project.clips.length}:v=1:a=1[vc][ac]`,
+    const base = buildBase(
+        builder,
+        segments,
+        output,
+        crossfades(segments),
+        content?.muted ?? true,
     )
+    const graded = colorFilters(project.color)
+    const colored = `bc`
+    builder.line(`[${base}]${[...graded, 'copy'].join(',')}[${colored}]`)
+
+    const withOverlays = buildOverlays(
+        builder,
+        visible.filter((track) => track.kind === 'overlay'),
+        output,
+        colored,
+    )
+    buildAudioTracks(
+        builder,
+        visible.filter((track) => track.kind === 'audio'),
+    )
+
     const videoTail = assFile ? [`ass=${assFile}`] : []
-    graph.push(`[vc]${[...videoTail, 'copy'].join(',')}[vo]`)
-    graph.push(`[ac]${[...audioFilters(project.audio), 'acopy'].join(',')}[ao]`)
+    builder.line(`[${withOverlays}]${[...videoTail, 'copy'].join(',')}[vo]`)
+
+    const mixed = 'amixed'
+    if (builder.audioLabels.length === 0)
+    {
+        builder.line(
+            `anullsrc=r=48000:cl=stereo,atrim=0:${num(duration, 3)}[${mixed}]`,
+        )
+    }
+    else if (builder.audioLabels.length === 1)
+    {
+        builder.line(`[${builder.audioLabels[0]}]${AUDIO_FORMAT}[${mixed}]`)
+    }
+    else
+    {
+        builder.line(
+            `${builder.audioLabels.map((l) => `[${l}]`).join('')}amix=inputs=${builder.audioLabels.length}:normalize=0:dropout_transition=0[${mixed}]`,
+        )
+    }
+    builder.line(
+        `[${mixed}]${[...audioFilters(project.audio), 'acopy'].join(',')}[ao]`,
+    )
 
     const args = [
         '-hide_banner',
@@ -144,22 +419,24 @@ export function buildExportPlan(
         'error',
         '-progress',
         'pipe:1',
-        ...inputs,
-        '-filter_complex_script',
+        ...builder.inputs,
+        GRAPH_OPTION,
         GRAPH_FILE,
         '-map',
         '[vo]',
         '-map',
         '[ao]',
+        '-t',
+        num(duration, 3),
         ...encoderArgs(
-            project.output.codec,
-            caps.encoders[project.output.codec],
-            project.output.quality,
+            output.codec,
+            caps.encoders[output.codec],
+            output.quality,
         ),
         '-pix_fmt',
         'yuv420p',
         '-r',
-        String(project.output.fps),
+        String(output.fps),
         '-c:a',
         'aac',
         '-b:a',
@@ -170,5 +447,5 @@ export function buildExportPlan(
         '+faststart',
         outFile,
     ]
-    return { args, graph: graph.join(';\n'), assFile, duration }
+    return { args, graph: builder.lines.join(';\n'), assFile, duration }
 }

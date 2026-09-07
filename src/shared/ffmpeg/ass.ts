@@ -1,6 +1,7 @@
 // Генератор ASS-файла: субтитры и текстовые слои в одном файле для фильтра `ass`.
 
-import type { Project, SubtitleCue, TextLayer } from '@shared/model'
+import type { Project, SubtitleCue, TextItem } from '@shared/model'
+import { isTextItem, itemEnd } from '@shared/model'
 import { SUBTITLE_STYLES, TEXT_FONT } from '@shared/presets'
 
 /** Цвет #RGB или #RRGGBB в формат ASS &HAABBGGRR. */
@@ -39,7 +40,7 @@ const ANIMATION_TAGS =
     pop: '\\fscx60\\fscy60\\t(0,120,\\fscx100\\fscy100)',
 } as const
 
-function textLayerLine(layer: TextLayer, width: number, height: number): string
+function textItemLine(layer: TextItem, width: number, height: number): string
 {
     const x = Math.round(layer.x * width)
     const y = Math.round(layer.y * height)
@@ -52,7 +53,7 @@ function textLayerLine(layer: TextLayer, width: number, height: number): string
         `\\bord${Math.max(2, Math.round(layer.size / 18))}`,
         ANIMATION_TAGS[layer.animation],
     ].join('')
-    return `Dialogue: 1,${assTime(layer.start)},${assTime(layer.end)},Text,,0,0,0,,{${tags}}${assText(layer.text)}`
+    return `Dialogue: 1,${assTime(layer.start)},${assTime(itemEnd(layer))},Text,,0,0,0,,{${tags}}${assText(layer.text)}`
 }
 
 function cueLine(
@@ -67,9 +68,18 @@ function cueLine(
     return `Dialogue: 0,${assTime(cue.start)},${assTime(cue.end)},Sub,,0,0,0,,{\\an5\\pos(${px},${py})}${assText(cue.text)}`
 }
 
+/** Текстовые элементы всех видимых дорожек по порядку. */
+export function textItems(project: Project): TextItem[]
+{
+    return project.tracks
+        .filter((track) => !track.hidden)
+        .flatMap((track) => track.items.filter(isTextItem))
+        .sort((a, b) => a.start - b.start)
+}
+
 export function hasOverlays(project: Project): boolean
 {
-    return project.texts.length > 0 || project.subtitles.cues.length > 0
+    return textItems(project).length > 0 || project.subtitles.cues.length > 0
 }
 
 export function buildAss(project: Project): string
@@ -96,8 +106,8 @@ export function buildAss(project: Project): string
     const cues = project.subtitles.cues.map((cue) =>
         cueLine(cue, width, height, project.subtitles.y),
     )
-    const texts = project.texts.map((layer) =>
-        textLayerLine(layer, width, height),
+    const texts = textItems(project).map((layer) =>
+        textItemLine(layer, width, height),
     )
     return [...header, ...cues, ...texts, ''].join('\n')
 }

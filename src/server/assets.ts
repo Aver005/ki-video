@@ -2,7 +2,8 @@
 
 import { basename, join } from 'node:path'
 import { mkdir, rename, rm, stat } from 'node:fs/promises'
-import type { MediaAsset } from '@shared/model'
+import type { MediaAsset, MediaKind } from '@shared/model'
+import { kindByExtension } from '@shared/api'
 import type { FfmpegTools } from '@server/ffmpeg/locate'
 import { probe } from '@server/ffmpeg/probe'
 import { ingest } from '@server/ffmpeg/ingest'
@@ -31,7 +32,10 @@ export function assetIdFor(path: string, size: number, mtimeMs: number): string
         .padStart(16, '0')
 }
 
-function isAssetLike(value: unknown): value is MediaAsset
+/** Индекс со старой версии не знал вида файла: недостающее поле дозаполняется при загрузке. */
+type StoredAsset = Omit<MediaAsset, 'kind'> & { kind?: MediaKind }
+
+function isAssetLike(value: unknown): value is StoredAsset
 {
     if (typeof value !== 'object' || value === null) return false
     const a = value as Record<string, unknown>
@@ -84,7 +88,12 @@ export class AssetStore
         }
         // Незавершённая подготовка после перезапуска не восстанавливается: файл добавляется заново.
         for (const asset of list)
-            if (isAssetLike(asset)) this.assets.set(asset.id, asset)
+            if (isAssetLike(asset))
+                this.assets.set(asset.id,
+                {
+                    ...asset,
+                    kind: asset.kind ?? 'video',
+                })
     }
 
     /** Запись через временный файл и по очереди: индекс не рвётся при падении и не откатывается старой копией. */
@@ -157,13 +166,18 @@ export class AssetStore
     {
         if (!this.tools) throw new Error('ffmpeg не настроен')
         const probed = await probe(this.tools.ffprobe, path)
+        const kind: MediaKind =
+            kindByExtension(path) ?? (probed.videoCodec ? 'video' : 'audio')
         const asset: MediaAsset =
         {
             id,
+            kind,
             name: basename(path),
             path,
             status: 'processing',
             ...probed,
+            // Картинка длится столько, сколько задаст элемент на таймлайне.
+            duration: kind === 'image' ? 0 : probed.duration,
         }
         this.assets.set(id, asset)
         this.emit({ type: 'asset', asset })

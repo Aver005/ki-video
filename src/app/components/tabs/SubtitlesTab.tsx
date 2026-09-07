@@ -1,16 +1,61 @@
 import { useState } from 'react'
 import { getState, useStore } from '@app/store/store'
-import { setCues, update } from '@app/store/actions'
+import { removeCue, setCues, update, updateCue } from '@app/store/actions'
 import { Slider } from '@app/components/Slider'
+import { NumberField } from '@app/components/NumberField'
 import { SUBTITLE_STYLES } from '@shared/presets'
 import { parseCues, printSimple } from '@shared/subtitles'
-import type { SubtitlePreset } from '@shared/model'
+import type { SubtitleCue, SubtitlePreset } from '@shared/model'
 
 const PRESET_IDS = Object.keys(SUBTITLE_STYLES) as SubtitlePreset[]
+
+/** Правка выделенной реплики: то же, что тянуть её за края на таймлайне. */
+function CueEditor({ cue }: { cue: SubtitleCue })
+{
+    return (
+        <div className="editor">
+            <textarea
+                value={cue.text}
+                rows={2}
+                aria-label="Текст реплики"
+                onChange={(e) =>
+                    updateCue(cue.id, { text: e.target.value }, false)
+                }
+                onBlur={() => updateCue(cue.id, {}, true)}
+            />
+            <div className="field-row">
+                <NumberField
+                    label="Начало, с"
+                    value={cue.start}
+                    onCommit={(start) =>
+                        updateCue(cue.id,
+                        {
+                            start,
+                            end: Math.max(cue.end, start + 0.1),
+                        })
+                    }
+                />
+                <NumberField
+                    label="Конец, с"
+                    value={cue.end}
+                    min={cue.start + 0.1}
+                    onCommit={(end) => updateCue(cue.id, { end })}
+                />
+            </div>
+            <button
+                className="btn btn--danger"
+                onClick={() => removeCue(cue.id)}
+            >
+                Удалить реплику
+            </button>
+        </div>
+    )
+}
 
 export function SubtitlesTab()
 {
     const subtitles = useStore((s) => s.project?.subtitles)
+    const selection = useStore((s) => s.selection)
     const cuesKey = subtitles ? printSimple(subtitles.cues) : ''
     const [draft, setDraft] = useState(cuesKey)
     const [syncedKey, setSyncedKey] = useState(cuesKey)
@@ -22,6 +67,10 @@ export function SubtitlesTab()
         setDraft(cuesKey)
     }
     if (!subtitles) return null
+    const selected =
+        selection?.kind === 'cue'
+            ? subtitles.cues.find((c) => c.id === selection.id)
+            : undefined
 
     const addAtPlayhead = () =>
     {
@@ -94,6 +143,7 @@ export function SubtitlesTab()
                 </button>
                 <span className="muted">{subtitles.cues.length} реплик</span>
             </div>
+            {selected && <CueEditor cue={selected} />}
             <p className="muted">
                 Распознавание речи не встроено: вставь SRT из любого сервиса.
             </p>

@@ -2,31 +2,12 @@
 
 import { join } from 'node:path'
 import { createProject, type Project } from '@shared/model'
+import { normalizeProject } from '@shared/normalize'
 
-function isRecord(value: unknown): value is Record<string, unknown>
+/** Разбор входящего проекта: приводит поля к модели и переносит старую версию. */
+export function parseProject(value: unknown): Project | null
 {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-/** Проверка верхнего уровня: версия, массивы и объекты на месте. Глубже валидирует сборка экспорта. */
-export function isProjectLike(value: unknown): value is Project
-{
-    if (!isRecord(value)) return false
-    const output = value['output']
-    return (
-        value['version'] === 1 &&
-        typeof value['id'] === 'string' &&
-        typeof value['name'] === 'string' &&
-        Array.isArray(value['clips']) &&
-        Array.isArray(value['texts']) &&
-        isRecord(output) &&
-        typeof output['width'] === 'number' &&
-        typeof output['height'] === 'number' &&
-        isRecord(value['color']) &&
-        isRecord(value['audio']) &&
-        isRecord(value['subtitles']) &&
-        Array.isArray((value['subtitles'] as Record<string, unknown>)['cues'])
-    )
+    return normalizeProject(value)
 }
 
 export class ProjectStore
@@ -45,8 +26,8 @@ export class ProjectStore
         const file = Bun.file(this.file)
         if (await file.exists())
         {
-            const parsed = await file.json().catch(() => null)
-            if (isProjectLike(parsed))
+            const parsed = parseProject(await file.json().catch(() => null))
+            if (parsed)
             {
                 this.current = parsed
                 return this.current

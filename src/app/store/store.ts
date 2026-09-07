@@ -4,17 +4,10 @@ import { useSyncExternalStore } from 'react'
 import type { MediaAsset, Project } from '@shared/model'
 import type { ExportJob, StatusResponse } from '@shared/api'
 
-export type InspectorTab =
-    | 'frame'
-    | 'color'
-    | 'audio'
-    | 'text'
-    | 'subtitles'
-    | 'export'
+export type InspectorTab = 'item' | 'color' | 'audio' | 'subtitles' | 'export'
 
 export type Selection =
-    | { kind: 'clip'; id: string }
-    | { kind: 'text'; id: string }
+    | { kind: 'item'; id: string }
     | { kind: 'cue'; id: string }
     | null
 
@@ -33,8 +26,58 @@ export interface EditorState
     future: Project[]
     /** Пикселей на секунду на таймлайне. */
     pxPerSec: number
+    /** Размеры панелей: тянутся мышью и переживают перезапуск. */
+    inspectorWidth: number
+    timelineHeight: number
     notice: string | null
 }
+
+const LAYOUT_KEY = 'ki-video:layout'
+
+interface Layout
+{
+    inspectorWidth: number
+    timelineHeight: number
+}
+
+const DEFAULT_LAYOUT: Layout = { inspectorWidth: 380, timelineHeight: 300 }
+
+function readLayout(): Layout
+{
+    try
+    {
+        const raw = localStorage.getItem(LAYOUT_KEY)
+        const parsed = raw ? (JSON.parse(raw) as Partial<Layout>) : {}
+        return {
+            inspectorWidth:
+                typeof parsed.inspectorWidth === 'number'
+                    ? parsed.inspectorWidth
+                    : DEFAULT_LAYOUT.inspectorWidth,
+            timelineHeight:
+                typeof parsed.timelineHeight === 'number'
+                    ? parsed.timelineHeight
+                    : DEFAULT_LAYOUT.timelineHeight,
+        }
+    }
+    catch
+    {
+        return DEFAULT_LAYOUT
+    }
+}
+
+export function saveLayout(layout: Layout): void
+{
+    try
+    {
+        localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout))
+    }
+    catch
+    {
+        // Приватный режим браузера: размеры просто не запомнятся.
+    }
+}
+
+const layout = readLayout()
 
 const initial: EditorState =
 {
@@ -46,10 +89,12 @@ const initial: EditorState =
     time: 0,
     playing: false,
     exportJob: null,
-    tab: 'frame',
+    tab: 'item',
     history: [],
     future: [],
     pxPerSec: 40,
+    inspectorWidth: layout.inspectorWidth,
+    timelineHeight: layout.timelineHeight,
     notice: null,
 }
 

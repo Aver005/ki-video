@@ -4,6 +4,7 @@ import { notify, update } from '@app/store/actions'
 import { getPlayer } from '@app/hooks/usePlayer'
 import { Slider } from '@app/components/Slider'
 import { formatTime } from '@shared/math'
+import { projectDuration } from '@shared/timeline'
 import type { VideoCodec } from '@shared/model'
 
 function isCodec(value: string): value is VideoCodec
@@ -38,7 +39,8 @@ export function ExportTab()
     const output = useStore((s) => s.project?.output)
     const job = useStore((s) => s.exportJob)
     const status = useStore((s) => s.status)
-    const clips = useStore((s) => s.project?.clips.length ?? 0)
+    const project = useStore((s) => s.project)
+    const duration = project ? projectDuration(project) : 0
     if (!output) return null
     const running = job?.status === 'running'
     const sizeIndex = SIZES.findIndex(
@@ -124,7 +126,7 @@ export function ExportTab()
             <div className="row-actions">
                 <button
                     className="btn btn--primary"
-                    disabled={running || clips === 0 || !status?.ok}
+                    disabled={running || duration === 0 || !status?.ok}
                     onClick={() => void startExport()}
                 >
                     {running ? 'Идёт экспорт…' : 'Экспортировать'}

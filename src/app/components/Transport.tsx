@@ -2,7 +2,7 @@ import { getPlayer } from '@app/hooks/usePlayer'
 import { useStore } from '@app/store/store'
 import {
     addKeyframe,
-    currentClip,
+    currentContent,
     removeKeyframe,
     seek,
     setZoom,
@@ -19,7 +19,7 @@ export function Transport()
     const pxPerSec = useStore((s) => s.pxPerSec)
     useStore((s) => s.assets)
     const duration = project ? projectDuration(project) : 0
-    const current = currentClip()
+    const current = currentContent()
     const hasKey = current?.keyframe !== undefined
     return (
         <div className="transport">

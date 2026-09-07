@@ -71,9 +71,9 @@ export const api =
         }),
 }
 
-export function proxyUrl(assetId: string): string
+export function mediaUrl(assetId: string): string
 {
-    return `/api/assets/${assetId}/proxy.mp4`
+    return `/api/assets/${assetId}/media`
 }
 
 export function thumbUrl(assetId: string, index: number): string

@@ -5,33 +5,37 @@ import {
     audioFilters,
     colorFilters,
     frameFilters,
+    overlayFilters,
 } from '@shared/ffmpeg/filters'
 import {
     buildExportPlan,
     ExportError,
     GRAPH_FILE,
+    GRAPH_OPTION,
     SOFTWARE_CAPS,
 } from '@shared/ffmpeg/export-args'
-import {
-    createProject,
-    NEUTRAL_COLOR,
-    SILENT_AUDIO,
-    type MediaAsset,
-} from '@shared/model'
+import { createProject, NEUTRAL_COLOR, SILENT_AUDIO } from '@shared/model'
+import type { Project } from '@shared/model'
 import { num } from '@shared/math'
+import {
+    assetMap,
+    imageAsset,
+    item,
+    musicAsset,
+    project as makeProject,
+    text,
+    track,
+    videoAsset,
+} from './factory'
 
-const asset: MediaAsset =
+const asset = videoAsset
+const output =
 {
-    id: 'a1',
-    name: 'clip.mp4',
-    path: 'E:/clip.mp4',
-    duration: 30,
-    width: 1728,
-    height: 1080,
+    width: 1080,
+    height: 1920,
     fps: 60,
-    videoCodec: 'hevc',
-    audioCodec: 'aac',
-    status: 'ready',
+    codec: 'h264' as const,
+    quality: 23,
 }
 
 describe('num', () =>
@@ -106,9 +110,22 @@ describe('ass', () =>
         expect(assTime(61.5)).toBe('0:01:01.50')
         expect(assTime(0.29)).toBe('0:00:00.29')
     })
-    test('файл содержит стили, реплики и текстовые слои', () =>
+    test('файл содержит стили, реплики и текстовые элементы дорожек', () =>
     {
-        const project = createProject('p')
+        const project = makeProject([
+            track('content', []),
+            track('overlay', [
+                text(
+                {
+                    id: 't',
+                    text: 'Заголовок {x}',
+                    start: 1,
+                    duration: 1,
+                    size: 96,
+                    animation: 'pop',
+                }),
+            ]),
+        ])
         project.subtitles.cues.push(
         {
             id: 'c',
@@ -116,48 +133,28 @@ describe('ass', () =>
             end: 1,
             text: 'Привет\nмир',
         })
-        project.texts.push(
-        {
-            id: 't',
-            text: 'Заголовок {x}',
-            start: 1,
-            end: 2,
-            x: 0.5,
-            y: 0.2,
-            size: 96,
-            color: '#ffffff',
-            outline: '#000000',
-            animation: 'pop',
-        })
         const ass = buildAss(project)
         expect(ass).toContain('PlayResX: 1080')
         expect(ass).toContain('Style: Sub,Arial,72,')
         expect(ass).toContain(
             'Dialogue: 0,0:00:00.00,0:00:01.00,Sub,,0,0,0,,{\\an5\\pos(540,1536)}Привет\\Nмир',
         )
+        expect(ass).toContain('Dialogue: 1,0:00:01.00,0:00:02.00,Text')
         expect(ass).toContain('\\pos(540,384)\\fs96')
         expect(ass).toContain('Заголовок x')
+    })
+    test('скрытая дорожка в ASS не попадает', () =>
+    {
+        const hidden = { ...track('overlay', [text()]), hidden: true }
+        expect(buildAss(makeProject([hidden]))).not.toContain('Dialogue: 1')
     })
 })
 
 describe('filters', () =>
 {
-    const output =
-    {
-        width: 1080,
-        height: 1920,
-        fps: 60,
-        codec: 'h264' as const,
-        quality: 23,
-    }
     test('без ключей: статичный crop по центру с exact=1, без zoompan', () =>
     {
-        const f = frameFilters(
-            { id: 'c', assetId: 'a1', in: 0, out: 5, frame: [] },
-            asset,
-            output,
-        )
-        expect(f).toEqual([
+        expect(frameFilters(item(), asset, output)).toEqual([
             'fps=60',
             "crop=606:1080:'clip(864-303,0,1122)':'clip(540-540,0,0)':exact=1",
             'scale=1080:1920:flags=bicubic',
@@ -166,16 +163,13 @@ describe('filters', () =>
     test('панорама даёт выражение по t, зум добавляет zoompan по it', () =>
     {
         const f = frameFilters(
+            item(
             {
-                id: 'c',
-                assetId: 'a1',
-                in: 0,
-                out: 5,
                 frame: [
                     { t: 0, cx: 400, cy: 540, zoom: 1 },
                     { t: 2, cx: 1200, cy: 540, zoom: 2 },
                 ],
-            },
+            }),
             asset,
             output,
         )
@@ -186,6 +180,39 @@ describe('filters', () =>
             "zoompan=z='clip(if(lt(it,2),1+(2-1)*(it-0)/2,2),1,8)'",
         )
         expect(f[3]).toContain('d=1:s=1080x1920:fps=60')
+    })
+    test('наложение: масштаб по доле кадра, поворот с прозрачным фоном, сдвиг во времени', () =>
+    {
+        const placement = overlayFilters(
+            item(
+            {
+                assetId: imageAsset.id,
+                start: 2,
+                duration: 3,
+                fadeIn: 0.5,
+                box:
+                {
+                    x: 0.5,
+                    y: 0.25,
+                    width: 0.25,
+                    rotation: 90,
+                    opacity: 0.5,
+                },
+            }),
+            imageAsset,
+            output,
+        )
+        expect(placement.filters).toEqual([
+            'fps=60',
+            'scale=270:270:flags=bicubic',
+            'format=yuva420p',
+            'rotate=1.5708:c=none:ow=rotw(1.5708):oh=roth(1.5708)',
+            'colorchannelmixer=aa=0.5',
+            'fade=t=in:st=0:d=0.5:alpha=1',
+            'setpts=PTS-STARTPTS+2/TB',
+        ])
+        expect(placement.x).toBe(405)
+        expect(placement.y).toBe(345)
     })
     test('нейтральный цвет — пусто, пресет даёт eq/vibrance/unsharp', () =>
     {
@@ -228,29 +255,36 @@ describe('filters', () =>
 
 describe('buildExportPlan', () =>
 {
-    const assets = new Map([[asset.id, asset]])
+    const plan = (project: Project, ass: string | null = null) =>
+        buildExportPlan(project, assetMap, SOFTWARE_CAPS, 'out.mp4', ass)
+
     test('пустой проект — ошибка', () =>
     {
+        expect(() => plan(createProject('p'))).toThrow(ExportError)
+    })
+
+    test('элемент длиннее исходника — ошибка', () =>
+    {
         expect(() =>
-            buildExportPlan(
-                createProject('p'),
-                assets,
-                SOFTWARE_CAPS,
-                'out.mp4',
-                null,
+            plan(
+                makeProject([
+                    track('content', [item({ offset: 28, duration: 5 })]),
+                ]),
             ),
         ).toThrow(ExportError)
     })
-    test('два клипа склеиваются concat, граф уходит в файл, ass подключается, кодек по caps', () =>
+
+    test('два элемента подряд склеиваются concat, граф уходит в файл, ass подключается', () =>
     {
-        const project = createProject('p')
-        project.clips.push(
-            { id: 'c1', assetId: 'a1', in: 2, out: 5, frame: [] },
-            { id: 'c2', assetId: 'a1', in: 10, out: 12, frame: [] },
-        )
-        const plan = buildExportPlan(
+        const project = makeProject([
+            track('content', [
+                item({ id: 'c1', start: 0, duration: 3, offset: 2 }),
+                item({ id: 'c2', start: 3, duration: 2, offset: 10 }),
+            ]),
+        ])
+        const result = buildExportPlan(
             project,
-            assets,
+            assetMap,
             {
                 encoders: { h264: 'h264_nvenc', hevc: 'hevc_nvenc' },
                 hwaccel: 'cuda',
@@ -258,41 +292,130 @@ describe('buildExportPlan', () =>
             'out.mp4',
             'subs.ass',
         )
-        expect(plan.duration).toBe(5)
-        expect(plan.args).toContain('-hwaccel')
+        expect(result.duration).toBe(5)
         expect(
-            plan.args.slice(
-                plan.args.indexOf('-ss'),
-                plan.args.indexOf('-ss') + 6,
+            result.args.slice(
+                result.args.indexOf('-ss'),
+                result.args.indexOf('-ss') + 6,
             ),
         ).toEqual(['-ss', '2', '-t', '3', '-i', 'E:/clip.mp4'])
-        expect(plan.args[plan.args.indexOf('-filter_complex_script') + 1]).toBe(
+        expect(result.args).toContain('-hwaccel')
+        expect(result.args[result.args.indexOf(GRAPH_OPTION) + 1]).toBe(
             GRAPH_FILE,
         )
-        expect(plan.graph).toContain(
-            '[v0][a0][v1][a1]concat=n=2:v=1:a=1[vc][ac]',
-        )
-        expect(plan.graph).toContain('[vc]ass=subs.ass,copy[vo]')
-        expect(plan.args).toContain('h264_nvenc')
-        expect(plan.args).not.toContain('hvc1')
-        expect(plan.args[plan.args.length - 1]).toBe('out.mp4')
+        expect(result.graph).toContain('[bs0][bs1]concat=n=2:v=1:a=0[bx1]')
+        expect(result.graph).toContain('ass=subs.ass,copy[vo]')
+        expect(result.args).toContain('h264_nvenc')
+        expect(result.args).not.toContain('hvc1')
+        expect(result.args[result.args.length - 1]).toBe('out.mp4')
     })
+
+    test('зазор перед элементом заполняется чёрным', () =>
+    {
+        const result = plan(
+            makeProject([
+                track('content', [item({ id: 'c1', start: 2, duration: 3 })]),
+            ]),
+        )
+        expect(result.graph).toContain(
+            'color=c=black:s=1080x1920:r=60:d=2,format=yuv420p,setsar=1[bs0]',
+        )
+        expect(result.duration).toBe(5)
+    })
+
+    test('наезд элементов даёт xfade со смещением и кроссфейд звука', () =>
+    {
+        const result = plan(
+            makeProject([
+                track('content', [
+                    item({ id: 'c1', start: 0, duration: 4 }),
+                    item(
+                    {
+                        id: 'c2',
+                        start: 3,
+                        duration: 4,
+                        transition: 'slideleft',
+                    }),
+                ]),
+            ]),
+        )
+        expect(result.graph).toContain(
+            '[bs0][bs1]xfade=transition=slideleft:duration=1:offset=3[bx1]',
+        )
+        expect(result.graph).toContain('afade=t=out:st=3:d=1')
+        expect(result.graph).toContain('afade=t=in:st=0:d=1')
+        expect(result.duration).toBe(7)
+    })
+
+    test('картинка идёт входом с -loop, наложение ложится поверх базы', () =>
+    {
+        const result = plan(
+            makeProject([
+                track('content', [item({ id: 'c1', duration: 4 })]),
+                track('overlay', [
+                    item(
+                    {
+                        id: 'o1',
+                        assetId: imageAsset.id,
+                        start: 1,
+                        duration: 2,
+                    }),
+                ]),
+            ]),
+        )
+        expect(result.args).toContain('-loop')
+        expect(result.graph).toContain(
+            "overlay=324:744:eof_action=pass:enable='between(t,1,3)'[bo0]",
+        )
+    })
+
+    test('музыка с дорожки звука подмешивается, громкость и сдвиг на месте', () =>
+    {
+        const result = plan(
+            makeProject([
+                track('content', [item({ id: 'c1', duration: 10 })]),
+                track('audio', [
+                    item(
+                    {
+                        id: 'm',
+                        assetId: musicAsset.id,
+                        start: 2,
+                        duration: 5,
+                        volume: 0.4,
+                    }),
+                ]),
+            ]),
+        )
+        expect(result.graph).toContain('volume=0.4')
+        expect(result.graph).toContain('adelay=2000:all=1')
+        expect(result.graph).toContain('amix=inputs=2:normalize=0')
+    })
+
+    test('без звука вообще граф берёт тишину', () =>
+    {
+        const silent = new Map(assetMap)
+        silent.set(asset.id, { ...asset, audioCodec: null })
+        const result = buildExportPlan(
+            makeProject([track('content', [item({ id: 'c1', duration: 2 })])]),
+            silent,
+            SOFTWARE_CAPS,
+            'out.mp4',
+            null,
+        )
+        expect(result.graph).toContain('anullsrc=r=48000:cl=stereo,atrim=0:2')
+        expect(result.args).toContain('libx264')
+    })
+
     test('hevc получает тег hvc1 и на nvenc, и на libx265', () =>
     {
-        const project = createProject('p')
+        const project = makeProject([
+            track('content', [item({ id: 'c1', duration: 1 })]),
+        ])
         project.output.codec = 'hevc'
-        project.clips.push(
-        {
-            id: 'c1',
-            assetId: 'a1',
-            in: 0,
-            out: 1,
-            frame: [],
-        })
         expect(
             buildExportPlan(
                 project,
-                assets,
+                assetMap,
                 {
                     encoders: { h264: 'h264_nvenc', hevc: 'hevc_nvenc' },
                     hwaccel: 'cuda',
@@ -302,29 +425,26 @@ describe('buildExportPlan', () =>
             ).args,
         ).toContain('hvc1')
         expect(
-            buildExportPlan(project, assets, SOFTWARE_CAPS, 'o.mp4', null).args,
+            buildExportPlan(project, assetMap, SOFTWARE_CAPS, 'o.mp4', null)
+                .args,
         ).toContain('libx265')
     })
-    test('файл без звука получает тишину', () =>
+
+    test('скрытая дорожка не попадает в граф', () =>
     {
-        const project = createProject('p')
-        project.clips.push(
+        const overlay =
         {
-            id: 'c1',
-            assetId: 'a1',
-            in: 0,
-            out: 1,
-            frame: [],
-        })
-        const silent = new Map([[asset.id, { ...asset, audioCodec: null }]])
-        const plan = buildExportPlan(
-            project,
-            silent,
-            SOFTWARE_CAPS,
-            'out.mp4',
-            null,
+            ...track('overlay', [
+                item({ id: 'o1', assetId: imageAsset.id, duration: 2 }),
+            ]),
+            hidden: true,
+        }
+        const result = plan(
+            makeProject([
+                track('content', [item({ id: 'c1', duration: 4 })]),
+                overlay,
+            ]),
         )
-        expect(plan.graph).toContain('aevalsrc=0:d=1:s=48000:c=stereo')
-        expect(plan.args).toContain('libx264')
+        expect(result.graph).not.toContain('overlay=')
     })
 })

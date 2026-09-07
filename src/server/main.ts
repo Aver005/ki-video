@@ -7,14 +7,14 @@ import type { ImportRequest, ServerEvent, StatusResponse } from '@shared/api'
 import { loadConfig } from '@server/config'
 import { locateFfmpeg, type FfmpegTools } from '@server/ffmpeg/locate'
 import { ASSET_ID_PATTERN, AssetStore } from '@server/assets'
-import { ProjectStore, isProjectLike } from '@server/project'
+import { ProjectStore, parseProject } from '@server/project'
 import { ExportService } from '@server/export'
 import { serveFile } from '@server/http/range'
 import { guard, json, fail, readBody, type Handler } from '@server/http/guard'
 import { isDialogSupported, openFileDialog } from '@server/http/dialog'
 import { defaultDir, listDir } from '@server/http/fs'
 import { openAppWindow, revealInExplorer } from '@server/window'
-import { PROXY_FILE, THUMBS_DIR } from '@server/ffmpeg/ingest'
+import { mediaFile, THUMBS_DIR } from '@server/ffmpeg/ingest'
 import { isNativePeaksAvailable } from '@server/peaks'
 import pkg from '../../package.json' with { type: 'json' }
 
@@ -97,11 +97,13 @@ const server = Bun.serve(
                 json({ removed: await assets.remove(req.params.id) }),
             ),
         },
-        '/api/assets/:id/proxy.mp4': guard((req) =>
+        '/api/assets/:id/media': guard((req) =>
         {
-            const path = cacheFile(req.params.id, PROXY_FILE)
-            return path
-                ? serveFile(req, path, 'video/mp4')
+            const asset = assets.get(req.params.id)
+            const file = asset ? mediaFile(asset.kind) : null
+            const path = file ? cacheFile(req.params.id, file.name) : null
+            return path && file
+                ? serveFile(req, path, file.type)
                 : fail('Файл не найден', 404)
         }),
         '/api/assets/:id/thumbs/:n': guard((req) =>
@@ -123,9 +125,9 @@ const server = Bun.serve(
             GET: guard(async () => json({ project: await projects.load() })),
             PUT: guard(async (req) =>
             {
-                const body = await readBody<unknown>(req)
-                if (!isProjectLike(body)) return fail('Некорректный проект')
-                await projects.save(body)
+                const project = parseProject(await readBody<unknown>(req))
+                if (!project) return fail('Некорректный проект')
+                await projects.save(project)
                 return json({ ok: true })
             }),
         },
@@ -134,10 +136,10 @@ const server = Bun.serve(
         {
             POST: guard(async (req) =>
             {
-                const body = await readBody<unknown>(req)
-                if (!isProjectLike(body)) return fail('Некорректный проект')
-                await projects.save(body)
-                return json(await exporter.start(body, assets.map()))
+                const project = parseProject(await readBody<unknown>(req))
+                if (!project) return fail('Некорректный проект')
+                await projects.save(project)
+                return json(await exporter.start(project, assets.map()))
             }),
         },
         '/api/export/:id':

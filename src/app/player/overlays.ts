@@ -1,6 +1,8 @@
 // Текст и субтитры на canvas превью в тех же пропорциях, что задаёт ASS при экспорте.
 
-import type { Project, TextLayer } from '@shared/model'
+import type { Project, TextItem } from '@shared/model'
+import { itemEnd } from '@shared/model'
+import { textItems } from '@shared/ffmpeg/ass'
 import { SUBTITLE_STYLES, TEXT_FONT } from '@shared/presets'
 
 interface DrawTextOptions
@@ -46,12 +48,12 @@ function drawText(
 
 /** Прозрачность и масштаб по анимации слоя в момент t, как в тегах ASS. */
 function animationState(
-    layer: TextLayer,
+    layer: TextItem,
     t: number,
 ): { alpha: number; grow: number }
 {
     const sinceStart = t - layer.start
-    const untilEnd = layer.end - t
+    const untilEnd = itemEnd(layer) - t
     if (layer.animation === 'fade')
     {
         return {
@@ -92,9 +94,9 @@ export function drawOverlays(
             alpha: 1,
         })
     }
-    for (const layer of project.texts)
+    for (const layer of textItems(project))
     {
-        if (t < layer.start || t >= layer.end) continue
+        if (t < layer.start || t >= itemEnd(layer)) continue
         const anim = animationState(layer, t)
         drawText(ctx, layer.text,
         {

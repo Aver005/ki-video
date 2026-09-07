@@ -5,6 +5,7 @@ import type {
     ColorGrade,
     SubtitlePreset,
     TextAnimation,
+    TransitionKind,
 } from '@shared/model'
 import { NEUTRAL_COLOR, SILENT_AUDIO } from '@shared/model'
 
@@ -206,5 +207,17 @@ export const SUBTITLE_STYLES: Record<SubtitlePreset, SubtitleStyle> =
         bold: true,
     },
 }
+
+export const TRANSITIONS: readonly Preset<TransitionKind>[] = [
+    { id: 'fade', label: 'Плавно', value: 'fade' },
+    { id: 'dissolve', label: 'Растворение', value: 'dissolve' },
+    { id: 'wipeleft', label: 'Шторка влево', value: 'wipeleft' },
+    { id: 'wiperight', label: 'Шторка вправо', value: 'wiperight' },
+    { id: 'wipeup', label: 'Шторка вверх', value: 'wipeup' },
+    { id: 'wipedown', label: 'Шторка вниз', value: 'wipedown' },
+    { id: 'slideleft', label: 'Сдвиг влево', value: 'slideleft' },
+    { id: 'slideright', label: 'Сдвиг вправо', value: 'slideright' },
+    { id: 'circleopen', label: 'Круг', value: 'circleopen' },
+]
 
 export const TEXT_FONT = 'Arial'

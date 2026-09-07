@@ -1,6 +1,6 @@
 // Контракты HTTP и WebSocket между сервером и интерфейсом.
 
-import type { MediaAsset, Project, VideoCodec } from '@shared/model'
+import type { MediaAsset, MediaKind, Project, VideoCodec } from '@shared/model'
 
 export interface StatusResponse
 {
@@ -71,3 +71,32 @@ export const VIDEO_EXTENSIONS = [
     '.ts',
     '.avi',
 ]
+
+export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.bmp']
+
+export const AUDIO_EXTENSIONS = [
+    '.mp3',
+    '.wav',
+    '.m4a',
+    '.aac',
+    '.ogg',
+    '.opus',
+    '.flac',
+]
+
+export const MEDIA_EXTENSIONS = [
+    ...VIDEO_EXTENSIONS,
+    ...IMAGE_EXTENSIONS,
+    ...AUDIO_EXTENSIONS,
+]
+
+/** Вид файла по расширению: до ffprobe, чтобы выбрать способ подготовки. */
+export function kindByExtension(path: string): MediaKind | null
+{
+    const dot = path.lastIndexOf('.')
+    const ext = dot < 0 ? '' : path.slice(dot).toLowerCase()
+    if (VIDEO_EXTENSIONS.includes(ext)) return 'video'
+    if (IMAGE_EXTENSIONS.includes(ext)) return 'image'
+    if (AUDIO_EXTENSIONS.includes(ext)) return 'audio'
+    return null
+}
