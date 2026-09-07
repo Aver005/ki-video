@@ -1,0 +1,5 @@
+[serve.static]
+# Плагины бандлера для HTML-импортов не нужны: TSX и CSS Bun собирает сам.
+
+[test]
+root = "./tests"

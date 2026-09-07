@@ -1,0 +1,26 @@
+{
+  "name": "ki-video",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Быстрый монтаж вертикальных роликов: веб-интерфейс на Bun + ffmpeg",
+  "scripts": {
+    "dev": "bun run --hot src/server/main.ts",
+    "start": "bun run src/server/main.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.app.json",
+    "test": "bun test",
+    "check": "bun run typecheck && bun test",
+    "build": "bun run scripts/build.ts",
+    "hooks": "git config core.hooksPath .githooks"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.9.0"
+  }
+}

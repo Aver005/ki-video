@@ -1,0 +1,7 @@
+{
+  "port": 4777,
+  "dataDir": ".ki-data",
+  "ffmpegDir": "E:/Apps/ffmpeg/n81/ffmpeg-n8.1-latest-win64-gpl-8.1/bin",
+  "openWindow": true,
+  "threads": 4
+}

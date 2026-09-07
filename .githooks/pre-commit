@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Гейт перед коммитом: типы и тесты должны проходить.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+echo "[pre-commit] bun run typecheck"
+bun run typecheck
+echo "[pre-commit] bun test"
+bun test
+echo "[pre-commit] ok"
