@@ -13,6 +13,7 @@ import {
 import { setTab } from '@shared/model/editor'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
+import { Separator } from '@shared/ui/separator'
 
 export function AppHeader()
 {
@@ -34,23 +35,31 @@ export function AppHeader()
                         p.name = name
                     }, false)
                 }
-                className="max-w-90 flex-1"
+                className="w-56"
             >
                 <Input
                     placeholder="Название проекта"
-                    className="border-transparent bg-transparent hover:border-input"
+                    className="h-7 border-transparent bg-transparent hover:border-input"
                 />
             </TextField>
-            <div className="ml-auto flex items-center gap-2 font-mono text-muted-foreground tabular-nums">
-                <span>{formatTime(duration, false)}</span>
+            <div
+                className="ml-auto flex items-center gap-2 font-mono text-muted-foreground tabular-nums"
+                title={status?.ffmpeg ?? status?.error ?? '…'}
+            >
                 <span
-                    title={status?.ffmpeg ?? status?.error ?? '…'}
                     className={`inline-block size-2 rounded-full ${
                         status?.ok ? 'bg-emerald-500' : 'bg-destructive'
                     }`}
                 />
                 <span>{status?.hwaccel ? 'NVENC' : status ? 'CPU' : ''}</span>
             </div>
+            <Separator orientation="vertical" className="h-5" />
+            <span
+                className="font-mono tabular-nums"
+                title="Длительность проекта"
+            >
+                {formatTime(duration, false)}
+            </span>
             <Button
                 onPress={() => setTab('export')}
                 isDisabled={!project || duration === 0}

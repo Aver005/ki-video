@@ -111,24 +111,21 @@ export function Preview()
     useFrameGestures(canvasRef)
 
     return (
-        <div className="relative flex min-h-0 flex-1 items-center justify-center bg-background p-3">
-            <canvas
-                ref={canvasRef}
-                className="h-auto max-h-full w-auto max-w-full cursor-grab touch-none rounded-lg bg-black object-contain active:cursor-grabbing"
-                width={width}
-                height={CANVAS_HEIGHT}
-                aria-label="Превью кадра"
-            />
-            {!hasClips && (
-                <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 text-muted-foreground">
-                    Добавь файл слева и нажми «+»
-                </div>
-            )}
-            {hasClips && (
-                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 text-xs whitespace-nowrap text-muted-foreground">
-                    тяни — панорама · колесо — зум · K — ключ
-                </div>
-            )}
+        <div className="flex min-h-0 flex-1 flex-col bg-background p-3">
+            <div className="flex min-h-0 flex-1 items-center justify-center">
+                <canvas
+                    ref={canvasRef}
+                    className="h-auto max-h-full w-auto max-w-full cursor-grab touch-none rounded-lg bg-black object-contain shadow-2xl shadow-black/60 ring-1 ring-border active:cursor-grabbing"
+                    width={width}
+                    height={CANVAS_HEIGHT}
+                    aria-label="Превью кадра"
+                />
+            </div>
+            <span className="pt-2 text-center text-xs text-muted-foreground">
+                {hasClips
+                    ? 'тяни — панорама · колесо — зум · K — ключ'
+                    : 'Добавь файл слева и нажми «+»'}
+            </span>
         </div>
     )
 }

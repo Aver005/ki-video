@@ -97,7 +97,7 @@ export function TrackLane({
         <div className={laneRow()} style={{ height }}>
             <div className={laneHead()}>
                 <span
-                    className="truncate text-[11px] text-muted-foreground"
+                    className="truncate text-xs text-foreground/75"
                     title={track.name}
                 >
                     {track.name}

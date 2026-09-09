@@ -65,43 +65,55 @@ export function MediaBin()
 
     return (
         <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
-                <SectionTitle>Файлы</SectionTitle>
-                <Button variant="outline" onPress={() => void pickFiles()}>
-                    <Plus />
-                    Добавить
-                </Button>
+            <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2">
+                <div className="flex items-baseline gap-1.5">
+                    <SectionTitle>Файлы</SectionTitle>
+                    <span className="font-mono text-xs text-muted-foreground">
+                        {list.length}
+                    </span>
+                </div>
+                <div className="flex items-center gap-1">
+                    {VIEWS.map((v) => (
+                        <Toggle
+                            key={v.id}
+                            size="sm"
+                            isSelected={v.id === view}
+                            onChange={() =>
+                                resizeLayout({ binView: v.id }, true)
+                            }
+                            aria-label={v.label}
+                        >
+                            <v.icon />
+                        </Toggle>
+                    ))}
+                </div>
             </div>
-            <div className="flex items-center gap-1 px-3 pb-2">
-                {VIEWS.map((v) => (
-                    <Toggle
-                        key={v.id}
-                        size="sm"
-                        isSelected={v.id === view}
-                        onChange={() => resizeLayout({ binView: v.id }, true)}
-                        aria-label={v.label}
+            <div className="flex items-center gap-1.5 px-3 pb-2">
+                <TextField
+                    aria-label="Путь к файлу"
+                    className="flex-1"
+                    value={path}
+                    onChange={setPath}
+                    onKeyDown={(e) =>
+                    {
+                        if (e.key !== 'Enter') return
+                        e.preventDefault()
+                        void submitPath()
+                    }}
+                >
+                    <Input placeholder="или путь к файлу…" />
+                </TextField>
+                <span title="Выбрать файлы на диске" className="inline-flex">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onPress={() => void pickFiles()}
+                        aria-label="Добавить файлы"
                     >
-                        <v.icon />
-                    </Toggle>
-                ))}
-                <span className="ml-auto font-mono text-muted-foreground">
-                    {list.length}
+                        <Plus />
+                    </Button>
                 </span>
             </div>
-            <TextField
-                aria-label="Путь к файлу"
-                className="px-3 pb-2"
-                value={path}
-                onChange={setPath}
-                onKeyDown={(e) =>
-                {
-                    if (e.key !== 'Enter') return
-                    e.preventDefault()
-                    void submitPath()
-                }}
-            >
-                <Input placeholder="или путь к файлу…" />
-            </TextField>
             <div
                 className={
                     view === 'grid'

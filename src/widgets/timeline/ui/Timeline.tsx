@@ -80,7 +80,7 @@ export function Timeline()
                     <div className={laneHead({ ruler: true })}>
                         <Button
                             size="xs"
-                            variant="outline"
+                            variant="ghost"
                             onPress={() => addTrack('overlay')}
                         >
                             <Plus />
@@ -88,7 +88,7 @@ export function Timeline()
                         </Button>
                         <Button
                             size="xs"
-                            variant="outline"
+                            variant="ghost"
                             onPress={() => addTrack('audio')}
                         >
                             <Plus />

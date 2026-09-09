@@ -53,7 +53,7 @@ export function CueLane({ pxPerSec, width, height }: CueLaneProps)
     return (
         <div className={laneRow()} style={{ height }}>
             <div className={laneHead()}>
-                <span className="truncate text-[11px] text-muted-foreground">
+                <span className="truncate text-xs text-foreground/75">
                     Субтитры
                 </span>
             </div>
