@@ -1,5 +1,5 @@
 # STATE
-> Снимок состояния. Last updated: 2026-09-07.
+> Снимок состояния. Last updated: 2026-09-09.
 
 ## Сделано `[DONE]`
 
@@ -22,8 +22,9 @@
 - Иконки интерфейса на `lucide-react`: символов Unicode и эмодзи в кнопках больше нет.
 - Тесты: 62 (`bun test`), типы чистые в обоих tsconfig. Три независимых ревью пройдены, все существенные замечания закрыты (журнал 07.09.2026).
 - Интерфейс переведён на shadcn с базой React Aria и разложен по FSD: `src/core` (домен),
-  `src/shared/{ui,api,model}`, `src/entities/{project,timeline}`, `src/widgets/{app-header,transport}`.
-  Стили — Tailwind v4 через `bun-plugin-tailwind`, старый CSS втянут в `globals.css` слоями.
+  `src/shared/{ui,api,model}`, `src/entities/{project,player,asset}`, `src/features/split-item`,
+  `src/widgets/{app-header,transport,media-bin,preview,timeline,inspector,notice}`.
+  Стили — Tailwind v4 через `bun-plugin-tailwind`, свой CSS удалён, остался один `globals.css`.
 - Exe собран и проверен: `dist/ki-video.exe` 94 МБ, страница, ffmpeg, ingest и C-пики работают. Dockerfile написан, образ не собирался.
 
 ## Измерено (RTX 3060, ffmpeg 8.1, машина частично занята другим процессом)

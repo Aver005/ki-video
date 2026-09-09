@@ -1,7 +1,7 @@
 // Сборка одного exe: сервер, интерфейс и C-исходник пиков внутри. ffmpeg остаётся внешним.
 
 import tailwind from 'bun-plugin-tailwind'
-import { rm } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 import pkg from '../package.json' with { type: 'json' }
 
 const outdir = 'dist'
@@ -15,15 +15,17 @@ function isLocked(error: unknown): boolean
     return code === 'EPERM' || code === 'EBUSY' || code === 'ENOTEMPTY'
 }
 
+// Сносим только свой exe: рядом лежит .ki-data с проектом и кэшем пользователя.
 try
 {
-    await rm(outdir, { recursive: true, force: true })
+    await mkdir(outdir, { recursive: true })
+    await rm(outfile, { force: true })
 }
 catch (error)
 {
     if (!isLocked(error)) throw error
     console.error(
-        `не могу очистить ${outdir}: файлы заняты. Закрой запущенный ki-video и повтори сборку.`,
+        `не могу заменить ${outfile}: файл занят. Закрой запущенный ki-video и повтори сборку.`,
     )
     process.exit(1)
 }
